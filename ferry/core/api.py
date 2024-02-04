@@ -4,6 +4,7 @@ from ninja.security import HttpBearer
 
 from ferry.accounts.api import router as accounts_api
 from ferry.accounts.models import APIToken
+from ferry.court.api import router as court_api
 
 
 class TokenAuth(HttpBearer):
@@ -22,5 +23,6 @@ api = NinjaAPI(
 )
 
 api.add_router("/users", accounts_api)
+api.add_router("/", court_api)
 
 urls = api.urls

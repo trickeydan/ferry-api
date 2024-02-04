@@ -1,6 +1,6 @@
 import pytest
 
-from .models import APIToken, User
+from ferry.accounts.models import APIToken, User
 
 
 @pytest.fixture
