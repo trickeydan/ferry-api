@@ -1,6 +1,13 @@
+from typing import Literal
+
 from ninja import ModelSchema
+from pydantic import BaseModel
 
 from ferry.court.models import Person
+
+
+class DeleteConfirmation(BaseModel):
+    success: Literal[True] = True
 
 
 class PersonDetail(ModelSchema):

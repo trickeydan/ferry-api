@@ -9,6 +9,7 @@ from django.urls import reverse_lazy
 from ferry.accounts.models import APIToken
 from ferry.core.discord import NoSuchGuildMemberError
 from ferry.court.factories import PersonFactory
+from ferry.court.models import Person
 
 
 @pytest.mark.django_db
@@ -241,13 +242,6 @@ class TestPeopleUpdateEndpoint:
         assert person.display_name == expected_display_name
         assert person.discord_id == expected_discord_id
 
-    # @pytest.mark.parametrize(
-    #     ("payload", "expected_display_name", "expected_discord_id"),
-    #     [
-    #         pytest.param({"display_name": "bees", "discord_id": None}, "bees", None, id="remove-discord"),
-    #         pytest.param({"display_name": "wasps", "discord_id": 9876543210}, "wasps", 9876543210, id="update-both"),
-    #     ],
-    # )
     @patch("ferry.court.models.get_discord_client")
     def test_put_no_such_discord_user(
         self,
@@ -273,3 +267,39 @@ class TestPeopleUpdateEndpoint:
         assert resp.json() == {
             "detail": [{"detail": ["Unknown discord ID. Is the user part of the guild?"], "loc": "__all__"}]
         }
+
+
+@pytest.mark.django_db
+class TestPeopleDeleteEndpoint:
+    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {api_token.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+    def _get_url(self, person_id: UUID) -> str:
+        return reverse_lazy("api-1.0.0:people_delete", args=[person_id])
+
+    def test_delete_unauthenticated(self, client: Client) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)))
+        assert resp.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_delete_404(self, client: Client, api_token: APIToken) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+        assert resp.status_code == HTTPStatus.NOT_FOUND
+
+    def test_delete(self, client: Client, api_token: APIToken) -> None:
+        # Arrange
+        person = PersonFactory()
+        person_id = person.id
+
+        # Act
+        resp = client.delete(self._get_url(person.id), headers=self._get_headers(api_token))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data == {"success": True}
+
+        assert not Person.objects.filter(id=person_id).exists()

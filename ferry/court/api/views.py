@@ -9,7 +9,7 @@ from ninja.pagination import paginate
 
 from ferry.court.models import Person
 
-from .schema import PersonDetail, PersonUpdate
+from .schema import DeleteConfirmation, PersonDetail, PersonUpdate
 
 router = Router()
 
@@ -59,3 +59,17 @@ def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) 
     person.save()
 
     return person
+
+
+@router.delete(
+    "/people/{person_id}",
+    response=DeleteConfirmation,
+    tags=["People"],
+    summary="Delete a person",
+)
+def people_delete(request: HttpRequest, person_id: UUID) -> DeleteConfirmation:
+    assert request.user.is_authenticated
+    person = get_object_or_404(Person, id=person_id)
+    person.delete()
+
+    return DeleteConfirmation()
