@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from django.db import transaction
+from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -46,19 +46,16 @@ def people_detail(request: HttpRequest, person_id: UUID) -> Person:
 )
 def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) -> Person:
     assert request.user.is_authenticated
+    person = get_object_or_404(Person, id=person_id)
 
-    with transaction.atomic():
-        person = get_object_or_404(Person.objects.select_for_update(), id=person_id)
+    # Update the person object
+    person.display_name = payload.display_name
+    person.discord_id = payload.discord_id
 
-        # Update the person objects
-        person.display_name = payload.display_name
-        person.discord_id = payload.discord_id
+    try:
+        person.full_clean()
+    except ValidationError as e:
+        raise errors.ValidationError([{"loc": k, "detail": v} for k, v in e.message_dict.items()]) from e
+    person.save()
 
-        people_with_discord_id_qs = Person.objects.exclude(id=person.id).filter(discord_id=payload.discord_id)
-        if payload.discord_id is not None:
-            if people_with_discord_id_qs.exists():
-                raise errors.HttpError(status_code=400, message="another person has that discord id")
-
-        # TODO: Check ID
-        person.save()
     return person

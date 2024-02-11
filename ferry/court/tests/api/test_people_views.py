@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from unittest.mock import Mock, patch
 from uuid import UUID
 
 import pytest
@@ -205,8 +206,10 @@ class TestPeopleUpdateEndpoint:
             pytest.param({"display_name": "wasps", "discord_id": 9876543210}, "wasps", 9876543210, id="update-both"),
         ],
     )
+    @patch("ferry.court.models.get_discord_client")
     def test_put(
         self,
+        mock_get_discord_client: Mock,
         client: Client,
         api_token: APIToken,
         payload: dict,
@@ -214,6 +217,8 @@ class TestPeopleUpdateEndpoint:
         expected_discord_id: int | None,
     ) -> None:
         # Arrange
+        mock_get_guild_member_by_id = mock_get_discord_client.get_guild_member_by_id
+        mock_get_guild_member_by_id.return_value = {}
         person = PersonFactory(display_name="bees", discord_id=1234567890)
 
         # Act
