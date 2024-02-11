@@ -20,9 +20,17 @@ class PersonLink(ModelSchema):
 
 
 class PersonDetail(ModelSchema):
+    id: UUID
+    display_name: str
+    discord_id: int | None
+    current_score: int
+    created_at: datetime
+    updated_at: datetime
+
     class Meta:
         model = Person
         fields = ["id", "display_name", "discord_id", "created_at", "updated_at"]
+        custom_fields = [("current_score", int, 0)]
         extra = "forbid"
 
 

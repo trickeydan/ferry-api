@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
+from django.db.models import IntegerField, QuerySet, Value
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from ninja import Router, errors
@@ -17,7 +17,7 @@ router = Router(tags=["People"])
 @paginate
 def people_list(request: HttpRequest) -> QuerySet[Person]:
     assert request.user.is_authenticated
-    return Person.objects.all()
+    return Person.objects.annotate(current_score=Value(14, output_field=IntegerField())).all()
 
 
 @router.post(
@@ -38,7 +38,8 @@ def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
         raise errors.ValidationError([{"loc": k, "detail": v} for k, v in e.message_dict.items()]) from e
     person.save()
 
-    return person
+    # HACK
+    return Person.objects.annotate(current_score=Value(14, output_field=IntegerField())).get(id=person.id)
 
 
 @router.get(
@@ -48,13 +49,17 @@ def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
 )
 def people_detail_by_discord_id(request: HttpRequest, discord_id: int) -> Person:
     assert request.user.is_authenticated
-    return get_object_or_404(Person, discord_id=discord_id)
+    return get_object_or_404(
+        Person.objects.annotate(current_score=Value(14, output_field=IntegerField())), discord_id=discord_id
+    )
 
 
 @router.get("/{person_id}", response=PersonDetail, tags=["People"], summary="Fetch a person")
 def people_detail(request: HttpRequest, person_id: UUID) -> Person:
     assert request.user.is_authenticated
-    return get_object_or_404(Person, id=person_id)
+    return get_object_or_404(
+        Person.objects.annotate(current_score=Value(14, output_field=IntegerField())), id=person_id
+    )
 
 
 @router.put(
@@ -76,7 +81,8 @@ def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) 
         raise errors.ValidationError([{"loc": k, "detail": v} for k, v in e.message_dict.items()]) from e
     person.save()
 
-    return person
+    # HACK
+    return Person.objects.annotate(current_score=Value(14, output_field=IntegerField())).get(id=person.id)
 
 
 @router.delete(
