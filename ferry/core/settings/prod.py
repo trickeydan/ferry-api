@@ -22,5 +22,8 @@ DATABASES = {
     }
 }
 
+MEDIA_ROOT = '/app/media/'
+STATIC_ROOT = '/app/static/'
+
 DISCORD_GUILD = os.environ["DISCORD_GUILD"]
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]

@@ -37,13 +37,18 @@ RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-r
 RUN addgroup --system ferry \
     && adduser --system --ingroup ferry ferry
 
-COPY ./docker/entrypoint.sh /entrypoint
+COPY ./docker/web/entrypoint.sh /entrypoint
 RUN chmod +x /entrypoint
 RUN chown ferry /entrypoint
 
-COPY ./docker/start.sh /start
+COPY ./docker/web/start.sh /start
 RUN chmod +x /start
 RUN chown ferry /start
+
+RUN mkdir /app/static
+RUN chown ferry:ferry /app/static
+RUN mkdir /app/media
+RUN chown ferry:ferry /app/media
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 

@@ -1,12 +1,24 @@
 version: "3.7"
 
 services:
+  nginx:
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    volumes:
+      - staticfiles:/app/static
+      - mediafiles:/app/media
+    depends_on:
+      - web
   web:
     build:
       context: .
-      dockerfile: ./Dockerfile
-    image: ferry_web
+      dockerfile: ./docker/web/Dockerfile
+    image: kmicms_web
     command: /start
+    volumes:
+      - staticfiles:/app/static
+      - mediafiles:/app/media
     env_file:
       - .env
     environment:
@@ -31,3 +43,5 @@ services:
 
 volumes:
   postgres_data:
+  staticfiles:
+  mediafiles:
