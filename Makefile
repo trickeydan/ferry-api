@@ -30,10 +30,10 @@ type:
 	mypy $(PYMODULE)
 
 test: | $(PYMODULE)
-	DJANGO_SETTINGS_MODULE=ferry.core.settings pytest -vv --cov=$(PYMODULE) $(PYMODULE)
+	DJANGO_SETTINGS_MODULE=ferry.core.settings.test pytest -vv --cov=$(PYMODULE) $(PYMODULE)
 
 test-cov:
-	DJANGO_SETTINGS_MODULE=ferry.core.settings pytest -vv --cov=$(PYMODULE) $(PYMODULE) --cov-report html
+	DJANGO_SETTINGS_MODULE=ferry.core.settings.test pytest -vv --cov=$(PYMODULE) $(PYMODULE) --cov-report html
 
 clean:
 	git clean -Xdf # Delete all files in .gitignore

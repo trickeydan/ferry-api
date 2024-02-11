@@ -1,0 +1,2 @@
+DISCORD_GUILD = 1234
+DISCORD_TOKEN = "not-a-token"  # noqa: S105
