@@ -11,7 +11,7 @@ class PersonDetail(ModelSchema):
 
 
 class PersonUpdate(ModelSchema):
-    display_name: str | None
+    display_name: str
     discord_id: int | None
 
     class Meta:

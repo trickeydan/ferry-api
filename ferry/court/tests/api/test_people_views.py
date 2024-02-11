@@ -129,13 +129,59 @@ class TestPeopleUpdateEndpoint:
         assert data == {"detail": [{"type": "missing", "loc": ["body", "payload"], "msg": "Field required"}]}
 
     @pytest.mark.parametrize(
-        "payload",
+        ("payload", "errors"),
         [
-            pytest.param({}, id="empty-dict"),
-            pytest.param({"bees": 4}, id="spurious"),
+            pytest.param(
+                {},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "display_name"], "msg": "Field required"},
+                    {"type": "missing", "loc": ["body", "payload", "discord_id"], "msg": "Field required"},
+                ],
+                id="empty-dict",
+            ),
+            pytest.param(
+                {"bees": 4},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "display_name"], "msg": "Field required"},
+                    {"type": "missing", "loc": ["body", "payload", "discord_id"], "msg": "Field required"},
+                ],
+                id="spurious",
+            ),
+            pytest.param(
+                {"display_name": "name"},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "discord_id"], "msg": "Field required"},
+                ],
+                id="missing_discord_id",
+            ),
+            pytest.param(
+                {"discord_id": 1234},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "display_name"], "msg": "Field required"},
+                ],
+                id="missing_display_name",
+            ),
+            pytest.param(
+                {"display_name": 1234, "discord_id": "a string"},
+                [
+                    {
+                        "type": "string_type",
+                        "loc": ["body", "payload", "display_name"],
+                        "msg": "Input should be a valid string",
+                    },
+                    {
+                        "type": "int_parsing",
+                        "loc": ["body", "payload", "discord_id"],
+                        "msg": "Input should be a valid integer, unable to parse string as an integer",
+                    },
+                ],
+                id="bad_types",
+            ),
         ],
     )
-    def test_put_empty_payload(self, client: Client, api_token: APIToken, payload: dict[str, int]) -> None:
+    def test_put_bad_payload(
+        self, client: Client, api_token: APIToken, payload: dict[str, int], errors: list[dict]
+    ) -> None:
         # Arrange
         person = PersonFactory()
 
@@ -150,20 +196,12 @@ class TestPeopleUpdateEndpoint:
         # Assert
         assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         data = resp.json()
-        assert data == {
-            "detail": [
-                {"type": "missing", "loc": ["body", "payload", "display_name"], "msg": "Field required"},
-                {"type": "missing", "loc": ["body", "payload", "discord_id"], "msg": "Field required"},
-            ]
-        }
+        assert data == {"detail": errors}
 
     @pytest.mark.parametrize(
         ("payload", "expected_display_name", "expected_discord_id"),
         [
-            pytest.param({"display_name": None, "discord_id": None}, "bees", 1234567890, id="noop"),
-            pytest.param({"display_name": "wasps", "discord_id": None}, "wasps", 1234567890, id="update-name"),
-            pytest.param({"display_name": None, "discord_id": 9876543210}, "bees", 9876543210, id="update-discord"),
-            pytest.param({"display_name": None, "discord_id": 0}, "bees", None, id="remove-discord"),
+            pytest.param({"display_name": "bees", "discord_id": None}, "bees", None, id="remove-discord"),
             pytest.param({"display_name": "wasps", "discord_id": 9876543210}, "wasps", 9876543210, id="update-both"),
         ],
     )
