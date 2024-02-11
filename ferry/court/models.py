@@ -6,8 +6,8 @@ from django.db import models
 
 class Person(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
-    display_name = models.CharField(max_length=255)
-    discord_id = models.BigIntegerField(verbose_name="Discord ID", blank=True, null=True)
+    display_name = models.CharField(max_length=255, unique=True)
+    discord_id = models.BigIntegerField(verbose_name="Discord ID", blank=True, null=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -17,6 +17,16 @@ class Person(models.Model):
 
     def __str__(self) -> str:
         return self.display_name
+
+    def clean_fields(self, exclude: Collection[str] | None = None) -> None:
+        super().clean_fields(exclude)
+
+        if self.discord_id:
+            discord_client = get_discord_client()
+            try:
+                discord_client.get_guild_member_by_id(settings.DISCORD_GUILD, self.discord_id)
+            except NoSuchGuildMemberError:
+                raise ValidationError("Unknown discord ID. Is the user part of the guild?") from None
 
 
 class Consequence(models.Model):
