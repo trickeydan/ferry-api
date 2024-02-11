@@ -3,8 +3,8 @@ import os
 
 from .base import *  # noqa: F403
 
-ALLOWED_HOSTS = ['ferry.containers-dev.sown.org.uk']
-CSRF_TRUSTED_ORIGINS = ['https://ferry.containers-dev.sown.org.uk']
+ALLOWED_HOSTS = ["ferry.containers-dev.sown.org.uk"]
+CSRF_TRUSTED_ORIGINS = ["https://ferry.containers-dev.sown.org.uk"]
 
 DEBUG = False
 
@@ -12,7 +12,7 @@ DEBUG = False
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 DATABASES = {
-    'default': {
+    "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.environ.get("SQL_DATABASE"),
         "USER": os.environ.get("SQL_USER"),
@@ -22,8 +22,8 @@ DATABASES = {
     }
 }
 
-MEDIA_ROOT = '/app/media/'
-STATIC_ROOT = '/app/static/'
+MEDIA_ROOT = "/app/media/"
+STATIC_ROOT = "/app/static/"
 
 DISCORD_GUILD = os.environ["DISCORD_GUILD"]
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]

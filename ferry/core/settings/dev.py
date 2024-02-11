@@ -18,7 +18,7 @@ DATABASES = {
     }
 }
 
-STATIC_ROOT = BASE_DIR / '../static'  # noqa: F405
+STATIC_ROOT = BASE_DIR / "../static"  # noqa: F405
 
 try:
     from .local import *  # noqa
