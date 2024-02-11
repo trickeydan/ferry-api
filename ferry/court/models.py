@@ -1,7 +1,11 @@
 import uuid
+from collections.abc import Collection
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+
+from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 
 
 class Person(models.Model):
