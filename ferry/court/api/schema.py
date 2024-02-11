@@ -1,13 +1,22 @@
+from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from ninja import ModelSchema
 from pydantic import BaseModel
 
-from ferry.court.models import Person
+from ferry.court.models import Consequence, Person
 
 
 class DeleteConfirmation(BaseModel):
     success: Literal[True] = True
+
+
+class PersonLink(ModelSchema):
+    class Meta:
+        model = Person
+        fields = ["id", "display_name"]
+        extra = "forbid"
 
 
 class PersonDetail(ModelSchema):
@@ -25,4 +34,18 @@ class PersonUpdate(ModelSchema):
         model = Person
         fields = ["display_name", "discord_id"]
         fields_optional = "__all__"
+        extra = "forbid"
+
+
+class ConsequenceDetail(ModelSchema):
+    id: UUID
+    content: str
+    is_enabled: bool
+    created_by: PersonLink
+    created_at: datetime
+    updated_at: datetime
+
+    class Meta:
+        model = Consequence
+        fields = ["id", "content", "is_enabled", "created_by", "created_at", "updated_at"]
         extra = "forbid"
