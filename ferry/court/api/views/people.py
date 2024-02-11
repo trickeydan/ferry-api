@@ -7,14 +7,13 @@ from django.shortcuts import get_object_or_404
 from ninja import Router, errors
 from ninja.pagination import paginate
 
+from ferry.court.api.schema import DeleteConfirmation, PersonDetail, PersonUpdate
 from ferry.court.models import Person
 
-from .schema import DeleteConfirmation, PersonDetail, PersonUpdate
-
-router = Router()
+router = Router(tags=["People"])
 
 
-@router.get("/people", response=list[PersonDetail], tags=["People"], summary="Get a list of all people")
+@router.get("/", response=list[PersonDetail], summary="Get a list of all people")
 @paginate
 def people_list(request: HttpRequest) -> QuerySet[Person]:
     assert request.user.is_authenticated
@@ -22,9 +21,8 @@ def people_list(request: HttpRequest) -> QuerySet[Person]:
 
 
 @router.post(
-    "/people",
+    "/",
     response=PersonDetail,
-    tags=["People"],
     summary="Create a person",
 )
 def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
@@ -44,9 +42,8 @@ def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
 
 
 @router.get(
-    "/people/by-discord-id/{discord_id}",
+    "/by-discord-id/{discord_id}",
     response=PersonDetail,
-    tags=["People"],
     summary="Fetch a person by their Discord ID",
 )
 def people_detail_by_discord_id(request: HttpRequest, discord_id: int) -> Person:
@@ -54,16 +51,15 @@ def people_detail_by_discord_id(request: HttpRequest, discord_id: int) -> Person
     return get_object_or_404(Person, discord_id=discord_id)
 
 
-@router.get("/people/{person_id}", response=PersonDetail, tags=["People"], summary="Fetch a person")
+@router.get("/{person_id}", response=PersonDetail, tags=["People"], summary="Fetch a person")
 def people_detail(request: HttpRequest, person_id: UUID) -> Person:
     assert request.user.is_authenticated
     return get_object_or_404(Person, id=person_id)
 
 
 @router.put(
-    "/people/{person_id}",
+    "/{person_id}",
     response=PersonDetail,
-    tags=["People"],
     summary="Update a person",
 )
 def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) -> Person:
@@ -84,9 +80,8 @@ def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) 
 
 
 @router.delete(
-    "/people/{person_id}",
+    "/{person_id}",
     response=DeleteConfirmation,
-    tags=["People"],
     summary="Delete a person",
 )
 def people_delete(request: HttpRequest, person_id: UUID) -> DeleteConfirmation:
