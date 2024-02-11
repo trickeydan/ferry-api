@@ -1,5 +1,5 @@
 from django.http import HttpRequest
-from ninja import NinjaAPI
+from ninja import NinjaAPI, Swagger
 from ninja.security import HttpBearer
 
 from ferry.accounts.api import router as accounts_api
@@ -17,10 +17,7 @@ class TokenAuth(HttpBearer):
             return None
 
 
-api = NinjaAPI(
-    title="Ferry API",
-    auth=TokenAuth(),
-)
+api = NinjaAPI(title="Ferry API", auth=TokenAuth(), docs=Swagger(settings={"persistAuthorization": True}))
 
 api.add_router("/users", accounts_api)
 api.add_router("/", court_api)
