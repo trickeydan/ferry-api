@@ -7,6 +7,7 @@ from django.test import Client
 from django.urls import reverse_lazy
 
 from ferry.accounts.models import APIToken
+from ferry.core.discord import NoSuchGuildMemberError
 from ferry.court.factories import PersonFactory
 
 
@@ -217,7 +218,7 @@ class TestPeopleUpdateEndpoint:
         expected_discord_id: int | None,
     ) -> None:
         # Arrange
-        mock_get_guild_member_by_id = mock_get_discord_client.get_guild_member_by_id
+        mock_get_guild_member_by_id = mock_get_discord_client.return_value.get_guild_member_by_id
         mock_get_guild_member_by_id.return_value = {}
         person = PersonFactory(display_name="bees", discord_id=1234567890)
 
@@ -239,3 +240,36 @@ class TestPeopleUpdateEndpoint:
         person.refresh_from_db()
         assert person.display_name == expected_display_name
         assert person.discord_id == expected_discord_id
+
+    # @pytest.mark.parametrize(
+    #     ("payload", "expected_display_name", "expected_discord_id"),
+    #     [
+    #         pytest.param({"display_name": "bees", "discord_id": None}, "bees", None, id="remove-discord"),
+    #         pytest.param({"display_name": "wasps", "discord_id": 9876543210}, "wasps", 9876543210, id="update-both"),
+    #     ],
+    # )
+    @patch("ferry.court.models.get_discord_client")
+    def test_put_no_such_discord_user(
+        self,
+        mock_get_discord_client: Mock,
+        client: Client,
+        api_token: APIToken,
+    ) -> None:
+        # Arrange
+        mock_get_guild_member_by_id = mock_get_discord_client.return_value.get_guild_member_by_id
+        mock_get_guild_member_by_id.side_effect = NoSuchGuildMemberError
+        person = PersonFactory(display_name="bees", discord_id=1234567890)
+
+        # Act
+        resp = client.put(
+            self._get_url(person.id),
+            headers=self._get_headers(api_token),
+            content_type="application/json",
+            data={"display_name": "wasps", "discord_id": 9876543210},
+        )
+
+        # Assert
+        assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+        assert resp.json() == {
+            "detail": [{"detail": ["Unknown discord ID. Is the user part of the guild?"], "loc": "__all__"}]
+        }
