@@ -21,6 +21,28 @@ def people_list(request: HttpRequest) -> QuerySet[Person]:
     return Person.objects.all()
 
 
+@router.post(
+    "/people",
+    response=PersonDetail,
+    tags=["People"],
+    summary="Create a person",
+)
+def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
+    assert request.user.is_authenticated
+    person = Person(
+        display_name=payload.display_name,
+        discord_id=payload.discord_id,
+    )
+
+    try:
+        person.full_clean()
+    except ValidationError as e:
+        raise errors.ValidationError([{"loc": k, "detail": v} for k, v in e.message_dict.items()]) from e
+    person.save()
+
+    return person
+
+
 @router.get(
     "/people/by-discord-id/{discord_id}",
     response=PersonDetail,
