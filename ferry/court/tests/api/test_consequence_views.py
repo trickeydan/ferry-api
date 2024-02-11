@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from uuid import UUID
 
 import pytest
 from django.test import Client
@@ -37,3 +38,35 @@ class TestConsequenceListEndpoint:
         assert len(data["items"]) == 10
         actual_items = [item["id"] for item in data["items"]]
         assert sorted(actual_items) == sorted(expected_ids)
+
+
+@pytest.mark.django_db
+class TestConsequenceDetailEndpoint:
+    def _get_url(self, consequence_id: UUID) -> str:
+        return reverse_lazy("api-1.0.0:consequence_detail", args=[consequence_id])
+
+    def test_get_unauthenticated(self, client: Client) -> None:
+        resp = client.get(self._get_url(UUID(int=0)))
+        assert resp.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_get_404(self, client: Client, api_token: APIToken) -> None:
+        resp = client.get(self._get_url(UUID(int=0)), headers={"Authorization": f"Bearer {api_token.token}"})
+        assert resp.status_code == HTTPStatus.NOT_FOUND
+
+    def test_get(self, client: Client, api_token: APIToken) -> None:
+        # Arrange
+        consequence = ConsequenceFactory()
+
+        # Act
+        resp = client.get(self._get_url(consequence.id), headers={"Authorization": f"Bearer {api_token.token}"})
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data["id"] == str(consequence.id)
+        assert data["content"] == consequence.content
+        assert data["is_enabled"] == consequence.is_enabled
+        assert data["created_by"] == {
+            "id": str(consequence.created_by.id),
+            "display_name": consequence.created_by.display_name,
+        }
