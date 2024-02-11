@@ -12,6 +12,8 @@ django = "^4.2"
 django-stubs-ext = "^4.2.7"
 django-ninja = "^1.1.0"
 requests = "^2.31.0"
+gunicorn = "^21.2.0"
+psycopg = "^3.1.18"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.2.0"
