@@ -83,7 +83,7 @@ module = ["*.tests.*"]
 disable_error_code = ["arg-type"]
 
 [tool.django-stubs]
-django_settings_module = "ferry.core.settings.dev"
+django_settings_module = "ferry.core.settings.test"
 
 [tool.coverage.run]
 plugins = [

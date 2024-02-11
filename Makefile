@@ -3,11 +3,12 @@
 CMD:=poetry run
 PYMODULE:=ferry
 MANAGEPY:=$(CMD) ./manage.py
+SETTINGS_MODULE:=ferry.core.settings.test
 
 all: type test format lint
 
 lint: 
-	 $(CMD) ruff check $(PYMODULE)
+	$(CMD) ruff check $(PYMODULE)
 
 lint-fix: 
 	$(CMD) ruff check --fix $(PYMODULE)
@@ -19,21 +20,21 @@ dev:
 	$(MANAGEPY) runserver
 
 format:
-	$(CMD) find $(PYMODULE) -name "*.html" | xargs djhtml
+	find $(PYMODULE) -name "*.html" | xargs $(CMD) djhtml
 	$(CMD) ruff format $(PYMODULE)
 
 format-check:
-	$(CMD) find $(PYMODULE) -name "*.html" | xargs djhtml --check
+	find $(PYMODULE) -name "*.html" | xargs $(CMD) djhtml --check
 	$(CMD) ruff format --check $(PYMODULE)
 
 type: 
-	mypy $(PYMODULE)
+	$(CMD) mypy $(PYMODULE)
 
 test: | $(PYMODULE)
-	DJANGO_SETTINGS_MODULE=ferry.core.settings.test pytest -vv --cov=$(PYMODULE) $(PYMODULE)
+	DJANGO_SETTINGS_MODULE=$(SETTINGS_MODULE) $(CMD) pytest -vv --cov=$(PYMODULE) $(PYMODULE)
 
 test-cov:
-	DJANGO_SETTINGS_MODULE=ferry.core.settings.test pytest -vv --cov=$(PYMODULE) $(PYMODULE) --cov-report html
+	DJANGO_SETTINGS_MODULE=$(SETTINGS_MODULE) $(CMD) pytest -vv --cov=$(PYMODULE) $(PYMODULE) --cov-report html
 
 clean:
 	git clean -Xdf # Delete all files in .gitignore
