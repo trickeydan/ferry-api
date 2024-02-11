@@ -1,4 +1,4 @@
-people.json
+docker-compose.override.yml
 
 ### Django ###
 *.log
