@@ -404,6 +404,6 @@ class TestConsequencesDeleteEndpoint:
         # Assert
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
-        assert data == {"success": True}
+        assert data == {"status": "success"}
 
         assert not Consequence.objects.filter(id=consequence_id).exists()

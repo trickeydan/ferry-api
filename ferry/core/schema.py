@@ -4,6 +4,10 @@ from typing import Any, Literal
 from pydantic import BaseModel, model_validator
 
 
+class ConfirmationDetail(BaseModel):
+    status: Literal["success"] = "success"
+
+
 class ErrorDetail(BaseModel):
     status: Literal["error"] = "error"
     status_code: HTTPStatus

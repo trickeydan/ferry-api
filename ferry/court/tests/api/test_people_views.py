@@ -465,6 +465,6 @@ class TestPeopleDeleteEndpoint:
         # Assert
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
-        assert data == {"success": True}
+        assert data == {"status": "success"}
 
         assert not Person.objects.filter(id=person_id).exists()

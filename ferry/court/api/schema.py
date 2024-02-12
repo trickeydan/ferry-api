@@ -1,15 +1,9 @@
 from datetime import datetime
-from typing import Literal
 from uuid import UUID
 
 from ninja import ModelSchema
-from pydantic import BaseModel
 
 from ferry.court.models import Consequence, Person
-
-
-class DeleteConfirmation(BaseModel):
-    success: Literal[True] = True
 
 
 class PersonLink(ModelSchema):

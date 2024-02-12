@@ -8,8 +8,8 @@ from django.shortcuts import get_object_or_404
 from ninja import Router, errors
 from ninja.pagination import paginate
 
-from ferry.core.schema import ErrorDetail
-from ferry.court.api.schema import DeleteConfirmation, PersonDetail, PersonUpdate
+from ferry.core.schema import ConfirmationDetail, ErrorDetail
+from ferry.court.api.schema import PersonDetail, PersonUpdate
 from ferry.court.models import Person
 
 router = Router(tags=["People"])
@@ -118,15 +118,15 @@ def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) 
 @router.delete(
     "/{person_id}",
     response={
-        HTTPStatus.OK: DeleteConfirmation,
+        HTTPStatus.OK: ConfirmationDetail,
         HTTPStatus.NOT_FOUND: ErrorDetail,
         HTTPStatus.UNAUTHORIZED: ErrorDetail,
     },
     summary="Delete a person",
 )
-def people_delete(request: HttpRequest, person_id: UUID) -> DeleteConfirmation:
+def people_delete(request: HttpRequest, person_id: UUID) -> ConfirmationDetail:
     assert request.user.is_authenticated
     person = get_object_or_404(Person, id=person_id)
     person.delete()
 
-    return DeleteConfirmation()
+    return ConfirmationDetail()
