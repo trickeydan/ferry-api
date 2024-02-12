@@ -57,3 +57,13 @@ class ConsequenceDetail(ModelSchema):
         model = Consequence
         fields = ["id", "content", "is_enabled", "created_by", "created_at", "updated_at"]
         extra = "forbid"
+
+
+class ConsequenceUpdate(ModelSchema):
+    content: str
+    is_enabled: bool
+
+    class Meta:
+        model = Consequence
+        fields = ["content", "is_enabled"]
+        extra = "forbid"

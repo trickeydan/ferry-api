@@ -74,6 +74,151 @@ class TestConsequenceDetailEndpoint:
 
 
 @pytest.mark.django_db
+class TestConsequenceUpdateEndpoint:
+    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {api_token.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+    def _get_url(self, consequence_id: UUID) -> str:
+        return reverse_lazy("api-1.0.0:consequence_update", args=[consequence_id])
+
+    def test_put_unauthenticated(self, client: Client) -> None:
+        resp = client.put(self._get_url(UUID(int=0)))
+        assert resp.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_put_404(self, client: Client, api_token: APIToken) -> None:
+        resp = client.get(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+        assert resp.status_code == HTTPStatus.NOT_FOUND
+
+    def test_put_no_payload(self, client: Client, api_token: APIToken) -> None:
+        # Arrange
+        consequence = ConsequenceFactory()
+
+        # Act
+        resp = client.put(self._get_url(consequence.id), headers=self._get_headers(api_token))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+        data = resp.json()
+        assert data == {
+            "status": "error",
+            "status_code": 422,
+            "status_name": "UNPROCESSABLE_ENTITY",
+            "detail": [{"type": "missing", "loc": ["body", "payload"], "msg": "Field required"}],
+        }
+
+    @pytest.mark.parametrize(
+        ("payload", "errors"),
+        [
+            pytest.param(
+                {},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "content"], "msg": "Field required"},
+                    {"type": "missing", "loc": ["body", "payload", "is_enabled"], "msg": "Field required"},
+                ],
+                id="empty-dict",
+            ),
+            pytest.param(
+                {"bees": 4},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "content"], "msg": "Field required"},
+                    {"type": "missing", "loc": ["body", "payload", "is_enabled"], "msg": "Field required"},
+                ],
+                id="spurious",
+            ),
+            pytest.param(
+                {"is_enabled": True},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "content"], "msg": "Field required"},
+                ],
+                id="missing_content",
+            ),
+            pytest.param(
+                {"content": "bees"},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "is_enabled"], "msg": "Field required"},
+                ],
+                id="missing_is_enabled",
+            ),
+            pytest.param(
+                {"content": 1234, "is_enabled": "a string"},
+                [
+                    {
+                        "type": "string_type",
+                        "loc": ["body", "payload", "content"],
+                        "msg": "Input should be a valid string",
+                    },
+                    {
+                        "type": "bool_parsing",
+                        "loc": ["body", "payload", "is_enabled"],
+                        "msg": "Input should be a valid boolean, unable to interpret input",
+                    },
+                ],
+                id="bad_types",
+            ),
+        ],
+    )
+    def test_put_bad_payload(
+        self, client: Client, api_token: APIToken, payload: dict[str, int], errors: list[dict]
+    ) -> None:
+        # Arrange
+        consequence = ConsequenceFactory()
+
+        # Act
+        resp = client.put(
+            self._get_url(consequence.id),
+            headers=self._get_headers(api_token),
+            content_type="application/json",
+            data=payload,
+        )
+
+        # Assert
+        assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+        data = resp.json()
+        assert data == {"status": "error", "status_code": 422, "status_name": "UNPROCESSABLE_ENTITY", "detail": errors}
+
+    @pytest.mark.parametrize(
+        ("payload", "expected_content", "expected_is_enabled"),
+        [
+            pytest.param({"content": "bees", "is_enabled": False}, "bees", False, id="disabled"),
+            pytest.param({"content": "wasps", "is_enabled": True}, "wasps", True, id="enabled"),
+        ],
+    )
+    def test_put(
+        self,
+        client: Client,
+        api_token: APIToken,
+        payload: dict,
+        expected_content: str,
+        expected_is_enabled: bool,  # noqa: FBT001
+    ) -> None:
+        # Arrange
+        consequence = ConsequenceFactory(content="not bees", is_enabled=not expected_is_enabled)
+
+        # Act
+        resp = client.put(
+            self._get_url(consequence.id),
+            headers=self._get_headers(api_token),
+            content_type="application/json",
+            data=payload,
+        )
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data["id"] == str(consequence.id)
+        assert data["content"] == expected_content
+        assert data["is_enabled"] == expected_is_enabled
+
+        consequence.refresh_from_db()
+        assert consequence.content == expected_content
+        assert consequence.is_enabled == expected_is_enabled
+
+
+@pytest.mark.django_db
 class TestConsequencesDeleteEndpoint:
     def _get_headers(self, api_token: APIToken) -> dict[str, str]:
         return {
