@@ -7,6 +7,7 @@ from django.urls import reverse_lazy
 
 from ferry.accounts.models import APIToken
 from ferry.court.factories import ConsequenceFactory
+from ferry.court.models import Consequence
 
 
 @pytest.mark.django_db
@@ -70,3 +71,39 @@ class TestConsequenceDetailEndpoint:
             "id": str(consequence.created_by.id),
             "display_name": consequence.created_by.display_name,
         }
+
+
+@pytest.mark.django_db
+class TestConsequencesDeleteEndpoint:
+    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {api_token.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+    def _get_url(self, consequence_id: UUID) -> str:
+        return reverse_lazy("api-1.0.0:consequence_delete", args=[consequence_id])
+
+    def test_delete_unauthenticated(self, client: Client) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)))
+        assert resp.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_delete_404(self, client: Client, api_token: APIToken) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+        assert resp.status_code == HTTPStatus.NOT_FOUND
+
+    def test_delete(self, client: Client, api_token: APIToken) -> None:
+        # Arrange
+        consequence = ConsequenceFactory()
+        consequence_id = consequence.id
+
+        # Act
+        resp = client.delete(self._get_url(consequence.id), headers=self._get_headers(api_token))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data == {"success": True}
+
+        assert not Consequence.objects.filter(id=consequence_id).exists()

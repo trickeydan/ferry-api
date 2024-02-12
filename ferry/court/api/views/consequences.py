@@ -8,7 +8,7 @@ from ninja import Router
 from ninja.pagination import paginate
 
 from ferry.core.schema import ErrorDetail
-from ferry.court.api.schema import ConsequenceDetail
+from ferry.court.api.schema import ConsequenceDetail, DeleteConfirmation
 from ferry.court.models import Consequence
 
 router = Router(tags=["Consequences"])
@@ -38,3 +38,20 @@ def consequence_list(request: HttpRequest) -> QuerySet[Consequence]:
 def consequence_detail(request: HttpRequest, consequence_id: UUID) -> Consequence:
     assert request.user.is_authenticated
     return get_object_or_404(Consequence, id=consequence_id)
+
+
+@router.delete(
+    "/{consequence_id}",
+    response={
+        HTTPStatus.OK: DeleteConfirmation,
+        HTTPStatus.NOT_FOUND: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
+    summary="Delete a consequence",
+)
+def consequence_delete(request: HttpRequest, consequence_id: UUID) -> DeleteConfirmation:
+    assert request.user.is_authenticated
+    consequence = get_object_or_404(Consequence, id=consequence_id)
+
+    consequence.delete()
+    return DeleteConfirmation()
