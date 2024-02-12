@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -7,13 +8,18 @@ from django.shortcuts import get_object_or_404
 from ninja import Router, errors
 from ninja.pagination import paginate
 
+from ferry.core.schema import ErrorDetail
 from ferry.court.api.schema import DeleteConfirmation, PersonDetail, PersonUpdate
 from ferry.court.models import Person
 
 router = Router(tags=["People"])
 
 
-@router.get("/", response=list[PersonDetail], summary="Get a list of all people")
+@router.get(
+    "/",
+    response={HTTPStatus.OK: list[PersonDetail], HTTPStatus.UNAUTHORIZED: ErrorDetail},
+    summary="Get a list of all people",
+)
 @paginate
 def people_list(request: HttpRequest) -> QuerySet[Person]:
     assert request.user.is_authenticated
@@ -22,7 +28,11 @@ def people_list(request: HttpRequest) -> QuerySet[Person]:
 
 @router.post(
     "/",
-    response=PersonDetail,
+    response={
+        HTTPStatus.OK: PersonDetail,
+        HTTPStatus.UNPROCESSABLE_ENTITY: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
     summary="Create a person",
 )
 def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
@@ -44,7 +54,12 @@ def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
 
 @router.get(
     "/by-discord-id/{discord_id}",
-    response=PersonDetail,
+    response={
+        HTTPStatus.OK: PersonDetail,
+        HTTPStatus.NOT_FOUND: ErrorDetail,
+        HTTPStatus.UNPROCESSABLE_ENTITY: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
     summary="Fetch a person by their Discord ID",
 )
 def people_detail_by_discord_id(request: HttpRequest, discord_id: int) -> Person:
@@ -54,7 +69,17 @@ def people_detail_by_discord_id(request: HttpRequest, discord_id: int) -> Person
     )
 
 
-@router.get("/{person_id}", response=PersonDetail, tags=["People"], summary="Fetch a person")
+@router.get(
+    "/{person_id}",
+    response={
+        HTTPStatus.OK: PersonDetail,
+        HTTPStatus.NOT_FOUND: ErrorDetail,
+        HTTPStatus.UNPROCESSABLE_ENTITY: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
+    tags=["People"],
+    summary="Fetch a person",
+)
 def people_detail(request: HttpRequest, person_id: UUID) -> Person:
     assert request.user.is_authenticated
     return get_object_or_404(
@@ -64,7 +89,12 @@ def people_detail(request: HttpRequest, person_id: UUID) -> Person:
 
 @router.put(
     "/{person_id}",
-    response=PersonDetail,
+    response={
+        HTTPStatus.OK: PersonDetail,
+        HTTPStatus.NOT_FOUND: ErrorDetail,
+        HTTPStatus.UNPROCESSABLE_ENTITY: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
     summary="Update a person",
 )
 def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) -> Person:
@@ -87,7 +117,11 @@ def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) 
 
 @router.delete(
     "/{person_id}",
-    response=DeleteConfirmation,
+    response={
+        HTTPStatus.OK: DeleteConfirmation,
+        HTTPStatus.NOT_FOUND: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
     summary="Delete a person",
 )
 def people_delete(request: HttpRequest, person_id: UUID) -> DeleteConfirmation:

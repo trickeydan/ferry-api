@@ -124,7 +124,12 @@ class TestPeopleCreateEndpoint:
         # Assert
         assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         data = resp.json()
-        assert data == {"detail": errors}
+        assert data == {
+            "status": "error",
+            "status_code": 422,
+            "status_name": "UNPROCESSABLE_ENTITY",
+            "detail": errors,
+        }
 
     @pytest.mark.parametrize(
         ("payload", "expected_display_name", "expected_discord_id"),
@@ -188,7 +193,10 @@ class TestPeopleCreateEndpoint:
         # Assert
         assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         assert resp.json() == {
-            "detail": [{"detail": ["Unknown discord ID. Is the user part of the guild?"], "loc": "__all__"}]
+            "status": "error",
+            "status_code": 422,
+            "status_name": "UNPROCESSABLE_ENTITY",
+            "detail": [{"detail": ["Unknown discord ID. Is the user part of the guild?"], "loc": "__all__"}],
         }
 
 
@@ -278,7 +286,12 @@ class TestPeopleUpdateEndpoint:
         # Assert
         assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         data = resp.json()
-        assert data == {"detail": [{"type": "missing", "loc": ["body", "payload"], "msg": "Field required"}]}
+        assert data == {
+            "status": "error",
+            "status_code": 422,
+            "status_name": "UNPROCESSABLE_ENTITY",
+            "detail": [{"type": "missing", "loc": ["body", "payload"], "msg": "Field required"}],
+        }
 
     @pytest.mark.parametrize(
         ("payload", "errors"),
@@ -348,7 +361,7 @@ class TestPeopleUpdateEndpoint:
         # Assert
         assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         data = resp.json()
-        assert data == {"detail": errors}
+        assert data == {"status": "error", "status_code": 422, "status_name": "UNPROCESSABLE_ENTITY", "detail": errors}
 
     @pytest.mark.parametrize(
         ("payload", "expected_display_name", "expected_discord_id"),
@@ -414,7 +427,10 @@ class TestPeopleUpdateEndpoint:
         # Assert
         assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         assert resp.json() == {
-            "detail": [{"detail": ["Unknown discord ID. Is the user part of the guild?"], "loc": "__all__"}]
+            "status": "error",
+            "status_code": 422,
+            "status_name": "UNPROCESSABLE_ENTITY",
+            "detail": [{"detail": ["Unknown discord ID. Is the user part of the guild?"], "loc": "__all__"}],
         }
 
 
