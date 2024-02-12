@@ -59,6 +59,17 @@ class ConsequenceDetail(ModelSchema):
         extra = "forbid"
 
 
+class ConsequenceCreate(ModelSchema):
+    content: str
+    is_enabled: bool = True
+    created_by: UUID
+
+    class Meta:
+        model = Consequence
+        fields = ["content", "is_enabled", "created_by"]
+        extra = "forbid"
+
+
 class ConsequenceUpdate(ModelSchema):
     content: str
     is_enabled: bool

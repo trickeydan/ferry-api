@@ -9,8 +9,8 @@ from ninja import Router, errors
 from ninja.pagination import paginate
 
 from ferry.core.schema import ErrorDetail
-from ferry.court.api.schema import ConsequenceDetail, ConsequenceUpdate, DeleteConfirmation
-from ferry.court.models import Consequence
+from ferry.court.api.schema import ConsequenceCreate, ConsequenceDetail, ConsequenceUpdate, DeleteConfirmation
+from ferry.court.models import Consequence, Person
 
 router = Router(tags=["Consequences"])
 
@@ -24,6 +24,40 @@ router = Router(tags=["Consequences"])
 def consequence_list(request: HttpRequest) -> QuerySet[Consequence]:
     assert request.user.is_authenticated
     return Consequence.objects.prefetch_related("created_by").all()
+
+
+@router.post(
+    "/",
+    response={
+        HTTPStatus.OK: ConsequenceDetail,
+        HTTPStatus.UNPROCESSABLE_ENTITY: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
+    summary="Create a consequence",
+)
+def consequence_create(request: HttpRequest, payload: ConsequenceCreate) -> Consequence:
+    assert request.user.is_authenticated
+
+    try:
+        creator = Person.objects.get(id=payload.created_by)
+    except Person.DoesNotExist:
+        raise errors.ValidationError(
+            [{"loc": "created_by", "detail": f"Unable to find person with ID {payload.created_by}"}]
+        ) from None
+
+    consequence = Consequence(
+        content=payload.content,
+        is_enabled=payload.is_enabled,
+        created_by=creator,
+    )
+
+    try:
+        consequence.full_clean()
+    except ValidationError as e:
+        raise errors.ValidationError([{"loc": k, "detail": v} for k, v in e.message_dict.items()]) from e
+    consequence.save()
+
+    return consequence
 
 
 @router.get(
