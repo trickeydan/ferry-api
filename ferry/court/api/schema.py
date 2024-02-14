@@ -1,45 +1,34 @@
 from datetime import datetime
 from uuid import UUID
 
-from ninja import ModelSchema
-
-from ferry.court.models import Consequence, Person
+from ninja import Schema
 
 
-class PersonLink(ModelSchema):
-    class Meta:
-        model = Person
-        fields = ["id", "display_name"]
-        extra = "forbid"
+class PersonLink(Schema):
+    id: UUID
+    display_name: str
 
 
-class PersonDetail(ModelSchema):
+class PersonDetail(Schema):
     id: UUID
     display_name: str
     discord_id: int | None
-    current_score: int
+    current_score: int = 0
     created_at: datetime
     updated_at: datetime
 
-    class Meta:
-        model = Person
-        fields = ["id", "display_name", "discord_id", "created_at", "updated_at"]
-        custom_fields = [("current_score", int, 0)]
-        extra = "forbid"
 
-
-class PersonUpdate(ModelSchema):
+class PersonUpdate(Schema):
     display_name: str
     discord_id: int | None
 
-    class Meta:
-        model = Person
-        fields = ["display_name", "discord_id"]
-        fields_optional = "__all__"
-        extra = "forbid"
+
+class ConsequenceLink(Schema):
+    id: UUID
+    content: str
 
 
-class ConsequenceDetail(ModelSchema):
+class ConsequenceDetail(Schema):
     id: UUID
     content: str
     is_enabled: bool
@@ -47,24 +36,14 @@ class ConsequenceDetail(ModelSchema):
     created_at: datetime
     updated_at: datetime
 
-    class Meta:
-        model = Consequence
-        fields = ["id", "content", "is_enabled", "created_by", "created_at", "updated_at"]
-        extra = "forbid"
 
-
-class ConsequenceCreate(ModelSchema):
+class ConsequenceCreate(Schema):
     content: str
     is_enabled: bool = True
     created_by: UUID
 
-    class Meta:
-        model = Consequence
-        fields = ["content", "is_enabled", "created_by"]
-        extra = "forbid"
 
-
-class ConsequenceUpdate(ModelSchema):
+class ConsequenceUpdate(Schema):
     content: str
     is_enabled: bool
 
