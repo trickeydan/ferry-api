@@ -1,6 +1,6 @@
 import factory
 
-from .models import Consequence, Person
+from .models import Accusation, Consequence, Person, Ratification
 
 
 class PersonFactory(factory.django.DjangoModelFactory):
@@ -16,3 +16,21 @@ class ConsequenceFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Consequence
+
+
+class RatificationFactory(factory.django.DjangoModelFactory):
+    consequence = factory.SubFactory(ConsequenceFactory)
+    created_by = factory.SubFactory(PersonFactory)
+
+    class Meta:
+        model = Ratification
+
+
+class AccusationFactory(factory.django.DjangoModelFactory):
+    quote = factory.Faker("sentence")
+    suspect = factory.SubFactory(PersonFactory)
+    created_by = factory.SubFactory(PersonFactory)
+    ratification = factory.RelatedFactory(RatificationFactory, factory_related_name="accusation")
+
+    class Meta:
+        model = Accusation

@@ -47,7 +47,20 @@ class ConsequenceUpdate(Schema):
     content: str
     is_enabled: bool
 
-    class Meta:
-        model = Consequence
-        fields = ["content", "is_enabled"]
-        extra = "forbid"
+
+class RatificationDetail(Schema):
+    id: UUID
+    consequence: ConsequenceLink
+    created_by: PersonLink
+    created_at: datetime
+    updated_at: datetime
+
+
+class AccusationDetail(Schema):
+    id: UUID
+    quote: str
+    suspect: PersonLink
+    ratification: RatificationDetail | None = None
+    created_by: PersonLink
+    created_at: datetime
+    updated_at: datetime
