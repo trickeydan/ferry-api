@@ -7,6 +7,7 @@ from ninja.security import HttpBearer
 
 from ferry.accounts.api import router as accounts_api
 from ferry.accounts.models import APIToken
+from ferry.core.exceptions import ConflictError, InternalServerError
 from ferry.court.api import router as court_api
 
 from .schema import ErrorDetail
@@ -77,6 +78,32 @@ def protected_error_handler(request: HttpRequest, exc: ProtectedError) -> HttpRe
         request,
         error,
         status=HTTPStatus.BAD_REQUEST,
+    )
+
+
+@api.exception_handler(InternalServerError)
+def internal_server_error(request: HttpRequest, exc: InternalServerError) -> HttpResponse:
+    error = ErrorDetail(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        detail="No consequences available to assign",
+    )
+    return api.create_response(
+        request,
+        error,
+        status=HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
+
+
+@api.exception_handler(ConflictError)
+def conflict_error(request: HttpRequest, exc: ConflictError) -> HttpResponse:
+    error = ErrorDetail(
+        status_code=HTTPStatus.CONFLICT,
+        detail=exc.message,
+    )
+    return api.create_response(
+        request,
+        error,
+        status=HTTPStatus.CONFLICT,
     )
 
 
