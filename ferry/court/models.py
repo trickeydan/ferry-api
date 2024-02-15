@@ -4,6 +4,7 @@ from collections.abc import Collection
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 
@@ -14,6 +15,15 @@ class Person(models.Model):
     discord_id = models.BigIntegerField(verbose_name="Discord ID", blank=True, null=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    
+    @property
+    def current_score(self) -> int:
+        now = timezone.now()
+        cutoff_date = (10, 11)
+        last_year = timezone.datetime(now.year-1, *cutoff_date, tzinfo=now.tzinfo)
+        this_year = timezone.datetime(now.year, *cutoff_date, tzinfo=now.tzinfo)
+        cutoff = last_year if now < this_year else this_year
+        return int(sum(list(map(lambda dt: (3/4)**((cutoff-dt).days//365),Accusation.objects.exclude(ratification__isnull=True).filter(suspect=self).values_list("created_at", flat=True)))))
 
     class Meta:
         verbose_name_plural = "people"

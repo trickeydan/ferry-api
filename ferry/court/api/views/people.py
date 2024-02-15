@@ -23,7 +23,7 @@ router = Router(tags=["People"])
 @paginate
 def people_list(request: HttpRequest) -> QuerySet[Person]:
     assert request.user.is_authenticated
-    return Person.objects.annotate(current_score=Value(14, output_field=IntegerField())).all()
+    return Person.objects.all()
 
 
 @router.post(
@@ -48,8 +48,7 @@ def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
         raise errors.ValidationError([{"loc": k, "detail": v} for k, v in e.message_dict.items()]) from e
     person.save()
 
-    # HACK
-    return Person.objects.annotate(current_score=Value(14, output_field=IntegerField())).get(id=person.id)
+    return Person.objects.get(id=person.id)
 
 
 @router.get(
@@ -65,7 +64,7 @@ def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
 def people_detail_by_discord_id(request: HttpRequest, discord_id: int) -> Person:
     assert request.user.is_authenticated
     return get_object_or_404(
-        Person.objects.annotate(current_score=Value(14, output_field=IntegerField())), discord_id=discord_id
+        Person.objects, discord_id=discord_id
     )
 
 
@@ -83,7 +82,7 @@ def people_detail_by_discord_id(request: HttpRequest, discord_id: int) -> Person
 def people_detail(request: HttpRequest, person_id: UUID) -> Person:
     assert request.user.is_authenticated
     return get_object_or_404(
-        Person.objects.annotate(current_score=Value(14, output_field=IntegerField())), id=person_id
+        Person.objects, id=person_id
     )
 
 
@@ -111,8 +110,7 @@ def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) 
         raise errors.ValidationError([{"loc": k, "detail": v} for k, v in e.message_dict.items()]) from e
     person.save()
 
-    # HACK
-    return Person.objects.annotate(current_score=Value(14, output_field=IntegerField())).get(id=person.id)
+    return Person.objects.get(id=person.id)
 
 
 @router.delete(
