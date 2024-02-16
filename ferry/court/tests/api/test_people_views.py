@@ -8,7 +8,7 @@ from django.urls import reverse_lazy
 
 from ferry.accounts.models import APIToken
 from ferry.core.discord import NoSuchGuildMemberError
-from ferry.court.factories import PersonFactory
+from ferry.court.factories import AccusationFactory, PersonFactory
 from ferry.court.models import Person
 
 
@@ -166,6 +166,7 @@ class TestPeopleCreateEndpoint:
         assert data["id"]
         assert data["display_name"] == expected_display_name
         assert data["discord_id"] == expected_discord_id
+        assert data["current_score"] == 0
 
         person = Person.objects.get(id=data["id"])
         assert person.display_name == expected_display_name
@@ -226,6 +227,23 @@ class TestPeopleDetailEndpoint:
         assert data["id"] == str(person.id)
         assert data["display_name"] == person.display_name
         assert data["discord_id"] == person.discord_id
+        assert data["current_score"] == 0
+
+    def test_get_with_score(self, client: Client, api_token: APIToken) -> None:
+        # Arrange
+        person = PersonFactory()
+        AccusationFactory.create_batch(size=15, suspect=person)
+
+        # Act
+        resp = client.get(self._get_url(person.id), headers={"Authorization": f"Bearer {api_token.token}"})
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data["id"] == str(person.id)
+        assert data["display_name"] == person.display_name
+        assert data["discord_id"] == person.discord_id
+        assert data["current_score"] == 15
 
 
 @pytest.mark.django_db
@@ -254,6 +272,7 @@ class TestPeopleDetailByDiscordIDEndpoint:
         assert data["id"] == str(person.id)
         assert data["display_name"] == person.display_name
         assert data["discord_id"] == person.discord_id
+        assert data["current_score"] == 0
 
 
 @pytest.mark.django_db
@@ -399,6 +418,7 @@ class TestPeopleUpdateEndpoint:
         assert data["id"] == str(person.id)
         assert data["display_name"] == expected_display_name
         assert data["discord_id"] == expected_discord_id
+        assert data["current_score"] == 0
 
         person.refresh_from_db()
         assert person.display_name == expected_display_name

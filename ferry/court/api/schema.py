@@ -13,7 +13,7 @@ class PersonDetail(Schema):
     id: UUID
     display_name: str
     discord_id: int | None
-    current_score: int = 0
+    current_score: float
     created_at: datetime
     updated_at: datetime
 
