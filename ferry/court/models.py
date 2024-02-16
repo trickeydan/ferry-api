@@ -1,11 +1,56 @@
 import uuid
 from collections.abc import Collection
+from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Case, F, Func, Value, When
+from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
+
+
+class PersonQuerySet(models.QuerySet):
+
+    def with_current_score(self) -> models.QuerySet["Person"]:
+        dec_field: models.DecimalField = models.DecimalField(max_digits=3, decimal_places=2)
+        now = timezone.now()
+        most_recent_september_year = now.year - 1 if now.month < 9 else now.year
+        most_recent_september = datetime(
+            year=most_recent_september_year, month=9, day=1, hour=0, minute=0, tzinfo=timezone.get_current_timezone()
+        )
+        ratifications = (
+            Ratification.objects.filter(accusation__suspect_id=models.OuterRef("id"))
+            .order_by()
+            .annotate(
+                score_val=Case(
+                    When(accusation__created_at__gt=most_recent_september, then=Value(1, output_field=dec_field)),
+                    When(
+                        accusation__created_at__gt=most_recent_september.replace(year=most_recent_september_year - 1),
+                        then=Value(0.75, output_field=dec_field),
+                    ),
+                    When(
+                        accusation__created_at__gt=most_recent_september.replace(year=most_recent_september_year - 2),
+                        then=Value(0.5, output_field=dec_field),
+                    ),
+                    When(
+                        accusation__created_at__gt=most_recent_september.replace(year=most_recent_september_year - 3),
+                        then=Value(0.25, output_field=dec_field),
+                    ),
+                    default=Value(0, output_field=dec_field),
+                ),
+            )
+            .annotate(count=Func(F("score_val"), function="Sum"))
+            .values("count")
+        )
+        return self.annotate(
+            current_score=Coalesce(
+                models.Subquery(ratifications, output_field=dec_field),
+                Value(0, output_field=dec_field),
+            )
+        )
 
 
 class Person(models.Model):
@@ -14,6 +59,8 @@ class Person(models.Model):
     discord_id = models.BigIntegerField(verbose_name="Discord ID", blank=True, null=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    objects = PersonQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = "people"
@@ -63,7 +110,7 @@ class Accusation(models.Model):
         constraints = [
             models.CheckConstraint(
                 name="%(app_label)s_%(class)s_prevent_self_accusation",
-                check=~models.Q(suspect=models.F("created_by")),
+                check=~models.Q(suspect=F("created_by")),
             ),
         ]
 

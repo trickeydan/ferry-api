@@ -26,6 +26,7 @@ django-coverage-plugin = "^3.1.0"
 django-stubs = {version = "^4.2.7", extras = ["compatible-mypy"]}
 factory-boy = "^3.3.0"
 types-requests = "^2.31.0.20240125"
+time-machine = "^2.13.0"
 
 [tool.ruff]
 target-version = "py311"
