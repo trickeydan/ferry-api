@@ -25,7 +25,9 @@ from .api import urls as api_urls
 urlpatterns = [
     path("", TemplateView.as_view(template_name="home.html")),
     path("admin/", admin.site.urls),
-    path("api/", api_urls),
+    path("api/", TemplateView.as_view(template_name="api_index.html")),
+    path("api/docs/", TemplateView.as_view(template_name="api_index.html")),
+    path("api/v1/", api_urls),
 ]
 
 if settings.DEBUG:
