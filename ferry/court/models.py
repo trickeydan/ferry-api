@@ -11,44 +11,33 @@ from django.utils import timezone
 
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 
+SCORE_FIELD: models.DecimalField = models.DecimalField(max_digits=3, decimal_places=2)
+
 
 class PersonQuerySet(models.QuerySet):
-
-    def with_current_score(self) -> models.QuerySet["Person"]:
-        dec_field: models.DecimalField = models.DecimalField(max_digits=3, decimal_places=2)
-        now = timezone.now()
-        most_recent_september_year = now.year - 1 if now.month < 9 else now.year
-        most_recent_september = datetime(
-            year=most_recent_september_year, month=9, day=1, hour=0, minute=0, tzinfo=timezone.get_current_timezone()
-        )
+    def with_num_ratified_accusations(self) -> models.QuerySet["Person"]:
         ratifications = (
             Ratification.objects.filter(accusation__suspect_id=models.OuterRef("id"))
             .order_by()
-            .annotate(
-                score_val=Case(
-                    When(accusation__created_at__gt=most_recent_september, then=Value(1, output_field=dec_field)),
-                    When(
-                        accusation__created_at__gt=most_recent_september.replace(year=most_recent_september_year - 1),
-                        then=Value(0.75, output_field=dec_field),
-                    ),
-                    When(
-                        accusation__created_at__gt=most_recent_september.replace(year=most_recent_september_year - 2),
-                        then=Value(0.5, output_field=dec_field),
-                    ),
-                    When(
-                        accusation__created_at__gt=most_recent_september.replace(year=most_recent_september_year - 3),
-                        then=Value(0.25, output_field=dec_field),
-                    ),
-                    default=Value(0, output_field=dec_field),
-                ),
-            )
-            .annotate(count=Func(F("score_val"), function="Sum"))
+            .annotate(count=Func(F("id"), function="Count"))
+            .values("count")
+        )
+        return self.annotate(
+            num_ratified_accusations=models.Subquery(ratifications, output_field=models.PositiveIntegerField())
+        )
+
+    def with_current_score(self) -> models.QuerySet["Person"]:
+        ratifications = (
+            Ratification.objects.filter(accusation__suspect_id=models.OuterRef("id"))
+            .order_by()
+            .with_score_value()
+            .annotate(count=Func(F("score_value"), function="Sum"))
             .values("count")
         )
         return self.annotate(
             current_score=Coalesce(
-                models.Subquery(ratifications, output_field=dec_field),
-                Value(0, output_field=dec_field),
+                models.Subquery(ratifications, output_field=SCORE_FIELD),
+                Value(0, output_field=SCORE_FIELD),
             )
         )
 
@@ -122,6 +111,33 @@ class Accusation(models.Model):
             raise ValidationError("You cannot accuse yourself.")
 
 
+class RatificationQuerySet(models.QuerySet):
+    def with_score_value(self) -> "RatificationQuerySet":
+        now = timezone.now()
+        most_recent_september_year = now.year - 1 if now.month < 9 else now.year
+        most_recent_september = datetime(
+            year=most_recent_september_year, month=9, day=1, hour=0, minute=0, tzinfo=timezone.get_current_timezone()
+        )
+        return self.annotate(
+            score_value=Case(
+                When(accusation__created_at__gt=most_recent_september, then=Value(1, output_field=SCORE_FIELD)),
+                When(
+                    accusation__created_at__gt=most_recent_september.replace(year=most_recent_september_year - 1),
+                    then=Value(0.75, output_field=SCORE_FIELD),
+                ),
+                When(
+                    accusation__created_at__gt=most_recent_september.replace(year=most_recent_september_year - 2),
+                    then=Value(0.5, output_field=SCORE_FIELD),
+                ),
+                When(
+                    accusation__created_at__gt=most_recent_september.replace(year=most_recent_september_year - 3),
+                    then=Value(0.25, output_field=SCORE_FIELD),
+                ),
+                default=Value(0, output_field=SCORE_FIELD),
+            ),
+        )
+
+
 class Ratification(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     accusation = models.OneToOneField(Accusation, on_delete=models.CASCADE, related_name="ratification")
@@ -129,6 +145,8 @@ class Ratification(models.Model):
     created_by = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="ratifications")
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    objects = RatificationQuerySet.as_manager()
 
     def __str__(self) -> str:
         return f"ratified by {self.created_by} at {self.created_at}"
