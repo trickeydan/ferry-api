@@ -7,6 +7,7 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from ninja import Router, errors
 from ninja.pagination import paginate
+from ninja_extra.ordering import ordering
 
 from ferry.core.schema import ConfirmationDetail, ErrorDetail
 from ferry.court.api.schema import PersonDetail, PersonUpdate
@@ -21,6 +22,7 @@ router = Router(tags=["People"])
     summary="Get a list of all people",
 )
 @paginate
+@ordering
 def people_list(request: HttpRequest) -> QuerySet[Person]:
     assert request.user.is_authenticated
     return Person.objects.with_current_score().all()

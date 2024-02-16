@@ -6,6 +6,7 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.pagination import paginate
+from ninja_extra.ordering import ordering
 
 from ferry.core.schema import ErrorDetail
 from ferry.court.api.schema import AccusationDetail, RatificationDetail
@@ -20,6 +21,7 @@ router = Router(tags=["Accusations"])
     summary="Get a list of all accusations",
 )
 @paginate
+@ordering(ordering_fields=["content", "created_at", "updated_at"])
 def accusation_list(request: HttpRequest) -> QuerySet[Accusation]:
     assert request.user.is_authenticated
     return Accusation.objects.prefetch_related("created_by", "suspect").all()
