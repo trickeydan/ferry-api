@@ -56,6 +56,10 @@ class RatificationDetail(Schema):
     updated_at: datetime
 
 
+class RatificationCreate(Schema):
+    created_by: UUID
+
+
 class AccusationCreate(Schema):
     quote: str
     suspect: UUID
