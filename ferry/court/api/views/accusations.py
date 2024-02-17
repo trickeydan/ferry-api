@@ -10,8 +10,8 @@ from ninja.pagination import paginate
 from ninja_extra.ordering import ordering
 
 from ferry.core.schema import ErrorDetail
-from ferry.court.api.schema import AccusationCreate, AccusationDetail, RatificationDetail
-from ferry.court.models import Accusation, Person, Ratification
+from ferry.court.api.schema import AccusationCreate, AccusationDetail
+from ferry.court.models import Accusation, Person
 
 router = Router(tags=["Accusations"])
 
@@ -88,18 +88,3 @@ def accusation_create(request: HttpRequest, payload: AccusationCreate) -> Accusa
 def accusation_detail(request: HttpRequest, accusation_id: UUID) -> Accusation:
     assert request.user.is_authenticated
     return get_object_or_404(Accusation, id=accusation_id)
-
-
-@router.get(
-    "/{accusation_id}/ratification",
-    response={
-        HTTPStatus.OK: RatificationDetail,
-        HTTPStatus.NOT_FOUND: ErrorDetail,
-        HTTPStatus.UNPROCESSABLE_ENTITY: ErrorDetail,
-        HTTPStatus.UNAUTHORIZED: ErrorDetail,
-    },
-    summary="Fetch the ratification for an accusation, if ratified",
-)
-def ratification_detail(request: HttpRequest, accusation_id: UUID) -> Ratification:
-    assert request.user.is_authenticated
-    return get_object_or_404(Ratification, accusation_id=accusation_id)
