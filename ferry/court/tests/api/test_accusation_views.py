@@ -167,6 +167,35 @@ class TestAccusationCreateEndpoint:
             ],
         }
 
+    def test_post_empty_quote(
+        self,
+        client: Client,
+        api_token: APIToken,
+    ) -> None:
+        # Arrange
+        suspect = PersonFactory()
+        created_by = PersonFactory()
+
+        # Act
+        resp = client.post(
+            self._get_url(),
+            headers=self._get_headers(api_token),
+            content_type="application/json",
+            data={"quote": "", "suspect": suspect.id, "created_by": created_by.id},
+        )
+
+        # Assert
+        assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+        data = resp.json()
+        assert data == {
+            "status": "error",
+            "status_code": 422,
+            "status_name": "UNPROCESSABLE_ENTITY",
+            "detail": [
+                {"loc": "quote", "detail": ["This field cannot be blank."]},
+            ],
+        }
+
     def test_post_suspect_is_creator(
         self,
         client: Client,
