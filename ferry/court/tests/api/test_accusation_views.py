@@ -456,3 +456,39 @@ class TestAccusationUpdateEndpoint:
 
         accusation.refresh_from_db()
         assert accusation.quote == "wasps"
+
+
+@pytest.mark.django_db
+class TestAccusationDeleteEndpoint:
+    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {api_token.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+    def _get_url(self, person_id: UUID) -> str:
+        return reverse_lazy("api-1.0.0:accusation_delete", args=[person_id])
+
+    def test_delete_unauthenticated(self, client: Client) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)))
+        assert resp.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_delete_404(self, client: Client, api_token: APIToken) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+        assert resp.status_code == HTTPStatus.NOT_FOUND
+
+    def test_delete(self, client: Client, api_token: APIToken) -> None:
+        # Arrange
+        accusation = AccusationFactory()
+        accusation_id = accusation.id
+
+        # Act
+        resp = client.delete(self._get_url(accusation.id), headers=self._get_headers(api_token))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data == {"status": "success"}
+
+        assert not Accusation.objects.filter(id=accusation_id).exists()

@@ -9,7 +9,7 @@ from ninja import Router, errors
 from ninja.pagination import paginate
 from ninja_extra.ordering import ordering
 
-from ferry.core.schema import ErrorDetail
+from ferry.core.schema import ConfirmationDetail, ErrorDetail
 from ferry.court.api.schema import AccusationCreate, AccusationDetail, AccusationUpdate
 from ferry.court.models import Accusation, Person
 
@@ -113,3 +113,20 @@ def accusation_update(request: HttpRequest, accusation_id: UUID, payload: Accusa
     accusation.save()
 
     return accusation
+
+
+@router.delete(
+    "/{accusation_id}",
+    response={
+        HTTPStatus.OK: ConfirmationDetail,
+        HTTPStatus.NOT_FOUND: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
+    summary="Delete an accusation",
+)
+def accusation_delete(request: HttpRequest, accusation_id: UUID) -> ConfirmationDetail:
+    assert request.user.is_authenticated
+    accusation = get_object_or_404(Accusation, id=accusation_id)
+
+    accusation.delete()
+    return ConfirmationDetail()
