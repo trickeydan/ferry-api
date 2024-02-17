@@ -62,6 +62,10 @@ class AccusationCreate(Schema):
     created_by: UUID
 
 
+class AccusationUpdate(Schema):
+    quote: str
+
+
 class AccusationDetail(Schema):
     id: UUID
     quote: str

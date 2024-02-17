@@ -10,7 +10,7 @@ from ninja.pagination import paginate
 from ninja_extra.ordering import ordering
 
 from ferry.core.schema import ErrorDetail
-from ferry.court.api.schema import AccusationCreate, AccusationDetail
+from ferry.court.api.schema import AccusationCreate, AccusationDetail, AccusationUpdate
 from ferry.court.models import Accusation, Person
 
 router = Router(tags=["Accusations"])
@@ -88,3 +88,28 @@ def accusation_create(request: HttpRequest, payload: AccusationCreate) -> Accusa
 def accusation_detail(request: HttpRequest, accusation_id: UUID) -> Accusation:
     assert request.user.is_authenticated
     return get_object_or_404(Accusation, id=accusation_id)
+
+
+@router.put(
+    "/{accusation_id}",
+    response={
+        HTTPStatus.OK: AccusationDetail,
+        HTTPStatus.NOT_FOUND: ErrorDetail,
+        HTTPStatus.UNPROCESSABLE_ENTITY: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
+    summary="Update an accusation",
+)
+def accusation_update(request: HttpRequest, accusation_id: UUID, payload: AccusationUpdate) -> Accusation:
+    assert request.user.is_authenticated
+    accusation = get_object_or_404(Accusation, id=accusation_id)
+
+    # Update the accusation object
+    accusation.quote = payload.quote
+    try:
+        accusation.full_clean()
+    except ValidationError as e:
+        raise errors.ValidationError([{"loc": k, "detail": v} for k, v in e.message_dict.items()]) from e
+    accusation.save()
+
+    return accusation

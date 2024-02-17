@@ -298,3 +298,132 @@ class TestAccusationDetailEndpoint:
             "id": str(accusation.ratification.created_by.id),
             "display_name": accusation.ratification.created_by.display_name,
         }
+
+
+@pytest.mark.django_db
+class TestAccusationUpdateEndpoint:
+    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {api_token.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+    def _get_url(self, accusation_id: UUID) -> str:
+        return reverse_lazy("api-1.0.0:accusation_update", args=[accusation_id])
+
+    def test_put_unauthenticated(self, client: Client) -> None:
+        resp = client.put(self._get_url(UUID(int=0)))
+        assert resp.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_put_404(self, client: Client, api_token: APIToken) -> None:
+        resp = client.get(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+        assert resp.status_code == HTTPStatus.NOT_FOUND
+
+    def test_put_no_payload(self, client: Client, api_token: APIToken) -> None:
+        # Arrange
+        accusation = AccusationFactory()
+
+        # Act
+        resp = client.put(self._get_url(accusation.id), headers=self._get_headers(api_token))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+        data = resp.json()
+        assert data == {
+            "status": "error",
+            "status_code": 422,
+            "status_name": "UNPROCESSABLE_ENTITY",
+            "detail": [{"type": "missing", "loc": ["body", "payload"], "msg": "Field required"}],
+        }
+
+    @pytest.mark.parametrize(
+        ("payload", "errors"),
+        [
+            pytest.param(
+                {},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "quote"], "msg": "Field required"},
+                ],
+                id="empty-dict",
+            ),
+            pytest.param(
+                {"bees": 4},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "quote"], "msg": "Field required"},
+                ],
+                id="spurious",
+            ),
+            pytest.param(
+                {},
+                [
+                    {"type": "missing", "loc": ["body", "payload", "quote"], "msg": "Field required"},
+                ],
+                id="missing_quote",
+            ),
+            pytest.param(
+                {"quote": 1234},
+                [
+                    {
+                        "type": "string_type",
+                        "loc": ["body", "payload", "quote"],
+                        "msg": "Input should be a valid string",
+                    },
+                ],
+                id="bad_types",
+            ),
+            pytest.param(
+                {"quote": ""},
+                [
+                    {
+                        "loc": "quote",
+                        "detail": ["This field cannot be blank."],
+                    },
+                ],
+                id="empty_quote",
+            ),
+        ],
+    )
+    def test_put_bad_payload(
+        self, client: Client, api_token: APIToken, payload: dict[str, int], errors: list[dict]
+    ) -> None:
+        # Arrange
+        accusation = AccusationFactory()
+
+        # Act
+        resp = client.put(
+            self._get_url(accusation.id),
+            headers=self._get_headers(api_token),
+            content_type="application/json",
+            data=payload,
+        )
+
+        # Assert
+        assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+        data = resp.json()
+        assert data == {"status": "error", "status_code": 422, "status_name": "UNPROCESSABLE_ENTITY", "detail": errors}
+
+    def test_put(
+        self,
+        client: Client,
+        api_token: APIToken,
+    ) -> None:
+        # Arrange
+        accusation = AccusationFactory(quote="bees")
+
+        # Act
+        resp = client.put(
+            self._get_url(accusation.id),
+            headers=self._get_headers(api_token),
+            content_type="application/json",
+            data={"quote": "wasps"},
+        )
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data["id"] == str(accusation.id)
+        assert data["quote"] == "wasps"
+
+        accusation.refresh_from_db()
+        assert accusation.quote == "wasps"
