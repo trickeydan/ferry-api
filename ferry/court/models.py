@@ -108,7 +108,7 @@ class Accusation(models.Model):
 
     def clean(self) -> None:
         if self.created_by == self.suspect:
-            raise ValidationError("You cannot accuse yourself.")
+            raise ValidationError("Unable to create accusation that suspects the creator.")
 
 
 class RatificationQuerySet(models.QuerySet):
