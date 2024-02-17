@@ -7,7 +7,7 @@ from django.urls import reverse_lazy
 
 from ferry.accounts.models import APIToken
 from ferry.court.factories import AccusationFactory, ConsequenceFactory, PersonFactory
-from ferry.court.models import Ratification
+from ferry.court.models import Accusation, Ratification
 
 
 @pytest.mark.django_db
@@ -288,3 +288,43 @@ class TestRatificationCreateEndpoint:
         assert ratification.created_by_id == ratifier.id
         assert ratification.accusation == accusation
         assert ratification.consequence in consequences
+
+
+@pytest.mark.django_db
+class TestRatificationDeleteEndpoint:
+    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {api_token.token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+    def _get_url(self, accusation_id: UUID) -> str:
+        return reverse_lazy("api-1.0.0:ratification_delete", args=[accusation_id])
+
+    def test_delete_unauthenticated(self, client: Client) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)))
+        assert resp.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_delete_404(self, client: Client, api_token: APIToken) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+        assert resp.status_code == HTTPStatus.NOT_FOUND
+
+    def test_delete(self, client: Client, api_token: APIToken) -> None:
+        # Arrange
+        accusation = AccusationFactory()
+        accusation_id = accusation.id
+
+        # Sanity check
+        assert Ratification.objects.filter(accusation_id=accusation_id).exists()
+
+        # Act
+        resp = client.delete(self._get_url(accusation.id), headers=self._get_headers(api_token))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data == {"status": "success"}
+
+        assert Accusation.objects.filter(id=accusation_id).exists()
+        assert not Ratification.objects.filter(accusation_id=accusation_id).exists()

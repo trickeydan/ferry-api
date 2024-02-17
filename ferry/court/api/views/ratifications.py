@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Router, errors
 
 from ferry.core.exceptions import ConflictError, InternalServerError
-from ferry.core.schema import ErrorDetail
+from ferry.core.schema import ConfirmationDetail, ErrorDetail
 from ferry.court.api.schema import RatificationCreate, RatificationDetail
 from ferry.court.models import Accusation, Consequence, Person, Ratification
 
@@ -73,3 +73,20 @@ def ratification_create(request: HttpRequest, accusation_id: UUID, payload: Rati
     ratification.save()
 
     return ratification
+
+
+@router.delete(
+    "/{accusation_id}/ratification",
+    response={
+        HTTPStatus.OK: ConfirmationDetail,
+        HTTPStatus.NOT_FOUND: ErrorDetail,
+        HTTPStatus.UNAUTHORIZED: ErrorDetail,
+    },
+    summary="Delete a ratification",
+)
+def ratification_delete(request: HttpRequest, accusation_id: UUID) -> ConfirmationDetail:
+    assert request.user.is_authenticated
+    ratification = get_object_or_404(Ratification, accusation_id=accusation_id)
+
+    ratification.delete()
+    return ConfirmationDetail()
