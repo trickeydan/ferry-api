@@ -9,12 +9,14 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 django = "^4.2"
-django-stubs-ext = "^4.2.7"
 django-ninja = "^1.1.0"
+django-ninja-extra = "^0.20.4"
+django-stubs-ext = "^4.2.7"
 requests = "^2.31.0"
+
+[tool.poetry.group.prod.dependencies]
 gunicorn = "^21.2.0"
 psycopg = "^3.1.18"
-django-ninja-extra = "^0.20.4"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.2.0"
