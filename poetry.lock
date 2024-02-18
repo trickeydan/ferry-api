@@ -770,6 +770,17 @@ files = [
 ]
 
 [[package]]
+name = "rules"
+version = "3.3"
+description = "Awesome Django authorization, without the database"
+optional = false
+python-versions = "*"
+files = [
+    {file = "rules-3.3-py2.py3-none-any.whl", hash = "sha256:12c8bbab5f54560e68528fcca7abc0e162c35ac882e3cc0daed40ac49c963070"},
+    {file = "rules-3.3.tar.gz", hash = "sha256:bf7bea8b724b73c36a622714c1b3557620c187a2ee05321a2ac8ab7472dc4464"},
+]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -942,4 +953,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "5e5128de5502a9625e4ef3df1486b77aaf21e61f142a0b651c05fccffedf7c44"
+content-hash = "183ec2b50871a9eab954e1411d84bcf2e3b725568c1520f825fd6d98a89252d1"

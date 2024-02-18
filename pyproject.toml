@@ -13,6 +13,7 @@ django-ninja = "^1.1.0"
 django-ninja-extra = "^0.20.4"
 django-stubs-ext = "^4.2.7"
 requests = "^2.31.0"
+rules = "^3.3"
 
 [tool.poetry.group.prod.dependencies]
 gunicorn = "^21.2.0"
@@ -82,7 +83,7 @@ disallow_untyped_decorators = true
 check_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["factory.*",]
+module = ["factory.*", "rules.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
