@@ -14,6 +14,7 @@ class InlineAPITokenAdmin(admin.TabularInline):
 
 class FerryUserAdmin(UserAdmin):
     inlines = [InlineAPITokenAdmin]
+    readonly_fields = ["last_login", "date_joined"]
 
     fieldsets = (
         (None, {"fields": ("username", "password")}),
@@ -26,6 +27,12 @@ class FerryUserAdmin(UserAdmin):
                     "is_staff",
                     "is_superuser",
                 ),
+            },
+        ),
+        (
+            _("Ferry Service"),
+            {
+                "fields": ("person",),
             },
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),

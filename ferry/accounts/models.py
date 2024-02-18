@@ -6,7 +6,7 @@ from django.db import models
 
 
 class User(AbstractUser):
-    pass
+    person = models.OneToOneField("court.Person", blank=True, null=True, on_delete=models.PROTECT)
 
 
 class APIToken(models.Model):
