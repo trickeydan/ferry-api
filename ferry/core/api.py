@@ -7,7 +7,7 @@ from ninja.security import HttpBearer
 
 from ferry.accounts.api import router as accounts_api
 from ferry.accounts.models import APIToken
-from ferry.core.exceptions import ConflictError, InternalServerError
+from ferry.core.exceptions import ConflictError, ForbiddenError, InternalServerError
 from ferry.court.api import router as court_api
 
 from .schema import ErrorDetail
@@ -39,6 +39,16 @@ def authentication_error(request: HttpRequest, exc: errors.AuthenticationError) 
         request,
         error,
         status=HTTPStatus.UNAUTHORIZED,
+    )
+
+
+@api.exception_handler(ForbiddenError)
+def forbidden_error(request: HttpRequest, exc: ForbiddenError) -> HttpResponse:
+    error = ErrorDetail(status_code=HTTPStatus.FORBIDDEN, detail=exc.message)
+    return api.create_response(
+        request,
+        error,
+        status=HTTPStatus.FORBIDDEN,
     )
 
 
