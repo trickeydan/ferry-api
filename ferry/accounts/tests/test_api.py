@@ -7,8 +7,10 @@ import pytest
 from django.test import Client
 from django.urls import reverse_lazy
 
+from ferry.conftest import GetAPIToken
+
 if TYPE_CHECKING:
-    from ferry.accounts.models import APIToken, User
+    from ferry.accounts.models import User
 
 
 @pytest.mark.django_db
@@ -23,7 +25,13 @@ class TestUserInfoEndpoint:
         resp = client.get(self.url, headers={"Authorization": "Bearer bees"})
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_get(self, client: Client, user: User, api_token: APIToken) -> None:
+    def test_get(self, client: Client, user_with_person: User, get_api_token: GetAPIToken) -> None:
+        # Arrange
+        api_token = get_api_token(user_with_person)
+
+        # Act
         resp = client.get(self.url, headers={"Authorization": f"Bearer {api_token.token}"})
+
+        # Assert
         assert resp.status_code == HTTPStatus.OK
-        assert resp.json() == {"username": user.username}
+        assert resp.json() == {"username": user_with_person.username}
