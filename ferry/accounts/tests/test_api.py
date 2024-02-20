@@ -25,10 +25,25 @@ class TestUserInfoEndpoint(APITest):
         resp = client.get(self.url, headers={"Authorization": "Bearer bees"})
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_get(self, client: Client, user_with_person: User) -> None:
+    def test_get_with_person(self, client: Client, user_with_person: User) -> None:
         # Act
+        assert user_with_person.person is not None
         resp = client.get(self.url, headers=self.get_headers(user_with_person))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
-        assert resp.json() == {"username": user_with_person.username}
+        assert resp.json() == {
+            "username": user_with_person.username,
+            "person": {
+                "id": str(user_with_person.person.id),
+                "display_name": user_with_person.person.display_name,
+            },
+        }
+
+    def test_get_no_person(self, client: Client, admin_user: User) -> None:
+        # Act
+        resp = client.get(self.url, headers=self.get_headers(admin_user))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        assert resp.json() == {"username": admin_user.username, "person": None}

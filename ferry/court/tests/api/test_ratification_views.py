@@ -347,7 +347,6 @@ class TestRatificationDeleteEndpoint(APITest):
     def test_delete_no_permission(self, client: Client, user_with_person: User) -> None:
         # Arrange
         accusation = AccusationFactory()
-        accusation_id = accusation.id
 
         # Act
         resp = client.delete(self._get_url(accusation.id), headers=self.get_headers(user_with_person))

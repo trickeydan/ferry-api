@@ -1,9 +1,8 @@
-from ninja import ModelSchema
+from ninja import Schema
 
-from ferry.accounts.models import User
+from ferry.court.api.schema import PersonLink
 
 
-class UserInfo(ModelSchema):
-    class Meta:
-        model = User
-        fields = ["username"]
+class UserInfo(Schema):
+    username: str
+    person: PersonLink | None
