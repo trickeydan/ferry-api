@@ -5,31 +5,35 @@ import pytest
 from django.test import Client
 from django.urls import reverse_lazy
 
-from ferry.accounts.models import APIToken
+from ferry.accounts.models import User
 from ferry.court.factories import ConsequenceFactory, PersonFactory
-from ferry.court.models import Consequence
+from ferry.court.models import Consequence, Person
+from ferry.court.tests.utils import APITest
 
 
 @pytest.mark.django_db
-class TestConsequenceListEndpoint:
+class TestConsequenceListEndpoint(APITest):
     url = reverse_lazy("api-1.0.0:consequence_list")
 
     def test_get_unauthenticated(self, client: Client) -> None:
         resp = client.get(self.url)
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_get_no_results(self, client: Client, api_token: APIToken) -> None:
-        resp = client.get(self.url, headers={"Authorization": f"Bearer {api_token.token}"})
+    def test_get_no_results(self, client: Client, admin_user: User) -> None:
+        # Act
+        resp = client.get(self.url, headers=self.get_headers(admin_user))
+
+        # Assert
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
         assert data == {"items": [], "count": 0}
 
-    def test_get(self, client: Client, api_token: APIToken) -> None:
+    def test_get_superuser(self, client: Client, admin_user: User) -> None:
         # Arrange
-        expected_ids = [str(ConsequenceFactory().id) for _ in range(10)]
+        expected_ids = [str(ConsequenceFactory().id) for _ in range(10)]  # not owned by user
 
         # Act
-        resp = client.get(self.url, headers={"Authorization": f"Bearer {api_token.token}"})
+        resp = client.get(self.url, headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
@@ -40,16 +44,27 @@ class TestConsequenceListEndpoint:
         actual_items = [item["id"] for item in data["items"]]
         assert sorted(actual_items) == sorted(expected_ids)
 
+    def test_get(self, client: Client, user_with_person: User) -> None:
+        # Arrange
+        expected_ids = [str(ConsequenceFactory(created_by=user_with_person.person).id) for _ in range(5)]
+
+        ConsequenceFactory.create_batch(size=5)  # Expected to be excluded
+
+        # Act
+        resp = client.get(self.url, headers=self.get_headers(user_with_person))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+
+        assert data["count"] == 5
+        assert len(data["items"]) == 5
+        actual_items = [item["id"] for item in data["items"]]
+        assert sorted(actual_items) == sorted(expected_ids)
+
 
 @pytest.mark.django_db
-class TestConsequenceCreateEndpoint:
-    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {api_token.token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-
+class TestConsequenceCreateEndpoint(APITest):
     def _get_url(self) -> str:
         return reverse_lazy("api-1.0.0:consequence_create")
 
@@ -114,12 +129,12 @@ class TestConsequenceCreateEndpoint:
         ],
     )
     def test_post_bad_payload(
-        self, client: Client, api_token: APIToken, payload: dict[str, int], errors: list[dict]
+        self, client: Client, admin_user: User, payload: dict[str, int], errors: list[dict]
     ) -> None:
         # Act
         resp = client.post(
             self._get_url(),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data=payload,
         )
@@ -132,12 +147,12 @@ class TestConsequenceCreateEndpoint:
     def test_post_no_such_person(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         # Act
         resp = client.post(
             self._get_url(),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"content": "bees", "is_enabled": False, "created_by": UUID(int=0)},
         )
@@ -154,20 +169,10 @@ class TestConsequenceCreateEndpoint:
             ],
         }
 
-    @pytest.mark.parametrize(
-        ("payload", "expected_content", "expected_is_enabled"),
-        [
-            pytest.param({"content": "bees", "is_enabled": False}, "bees", False, id="disabled"),
-            pytest.param({"content": "wasps", "is_enabled": True}, "wasps", True, id="enabled"),
-        ],
-    )
-    def test_post(
+    def test_post_cannot_act_on_behalf(
         self,
         client: Client,
-        api_token: APIToken,
-        payload: dict,
-        expected_content: str,
-        expected_is_enabled: bool,  # noqa: FBT001
+        user_with_person: User,
     ) -> None:
         # Arrange
         person = PersonFactory()
@@ -175,7 +180,26 @@ class TestConsequenceCreateEndpoint:
         # Act
         resp = client.post(
             self._get_url(),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(user_with_person),
+            content_type="application/json",
+            data={"content": "bees", "is_enabled": False, "created_by": person.id},
+        )
+
+        # Assert
+        self.assert_forbidden(resp, message="You cannot act on behalf of other people.")
+
+    def _test_post(
+        self,
+        client: Client,
+        user: User,
+        person: Person,
+        payload: dict,
+        expected_content: str,
+        expected_is_enabled: bool,  # noqa: FBT001
+    ) -> None:
+        resp = client.post(
+            self._get_url(),
+            headers=self.get_headers(user),
             content_type="application/json",
             data={"created_by": person.id, **payload},
         )
@@ -195,9 +219,47 @@ class TestConsequenceCreateEndpoint:
         assert consequence.is_enabled == expected_is_enabled
         assert consequence.created_by_id == person.id
 
+    @pytest.mark.parametrize(
+        ("payload", "expected_content", "expected_is_enabled"),
+        [
+            pytest.param({"content": "bees", "is_enabled": False}, "bees", False, id="disabled"),
+            pytest.param({"content": "wasps", "is_enabled": True}, "wasps", True, id="enabled"),
+        ],
+    )
+    def test_post_superuser(
+        self,
+        client: Client,
+        admin_user: User,
+        payload: dict,
+        expected_content: str,
+        expected_is_enabled: bool,  # noqa: FBT001
+    ) -> None:
+        person = PersonFactory()
+
+        self._test_post(client, admin_user, person, payload, expected_content, expected_is_enabled)
+
+    @pytest.mark.parametrize(
+        ("payload", "expected_content", "expected_is_enabled"),
+        [
+            pytest.param({"content": "bees", "is_enabled": False}, "bees", False, id="disabled"),
+            pytest.param({"content": "wasps", "is_enabled": True}, "wasps", True, id="enabled"),
+        ],
+    )
+    def test_post(
+        self,
+        client: Client,
+        user_with_person: User,
+        payload: dict,
+        expected_content: str,
+        expected_is_enabled: bool,  # noqa: FBT001
+    ) -> None:
+        person = user_with_person.person
+
+        self._test_post(client, user_with_person, person, payload, expected_content, expected_is_enabled)
+
 
 @pytest.mark.django_db
-class TestConsequenceDetailEndpoint:
+class TestConsequenceDetailEndpoint(APITest):
     def _get_url(self, consequence_id: UUID) -> str:
         return reverse_lazy("api-1.0.0:consequence_detail", args=[consequence_id])
 
@@ -205,16 +267,25 @@ class TestConsequenceDetailEndpoint:
         resp = client.get(self._get_url(UUID(int=0)))
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_get_404(self, client: Client, api_token: APIToken) -> None:
-        resp = client.get(self._get_url(UUID(int=0)), headers={"Authorization": f"Bearer {api_token.token}"})
+    def test_get_404(self, client: Client, admin_user: User) -> None:
+        # Act
+        resp = client.get(self._get_url(UUID(int=0)), headers=self.get_headers(admin_user))
+
+        # Assert
         assert resp.status_code == HTTPStatus.NOT_FOUND
 
-    def test_get(self, client: Client, api_token: APIToken) -> None:
+    def test_get_no_permission(self, client: Client, user_with_person: Person) -> None:
         # Arrange
         consequence = ConsequenceFactory()
 
         # Act
-        resp = client.get(self._get_url(consequence.id), headers={"Authorization": f"Bearer {api_token.token}"})
+        resp = client.get(self._get_url(consequence.id), headers=self.get_headers(user_with_person))
+
+        # Assert
+        self.assert_forbidden(resp)
+
+    def _test_get(self, client: Client, user: User, consequence: Consequence) -> None:
+        resp = client.get(self._get_url(consequence.id), headers=self.get_headers(user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
@@ -227,16 +298,19 @@ class TestConsequenceDetailEndpoint:
             "display_name": consequence.created_by.display_name,
         }
 
+    def test_get(self, client: Client, user_with_person: User) -> None:
+        consequence = ConsequenceFactory(created_by=user_with_person.person)
+
+        self._test_get(client, user_with_person, consequence)
+
+    def test_get_admin(self, client: Client, admin_user: User) -> None:
+        consequence = ConsequenceFactory()
+
+        self._test_get(client, admin_user, consequence)
+
 
 @pytest.mark.django_db
-class TestConsequenceUpdateEndpoint:
-    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {api_token.token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-
+class TestConsequenceUpdateEndpoint(APITest):
     def _get_url(self, consequence_id: UUID) -> str:
         return reverse_lazy("api-1.0.0:consequence_update", args=[consequence_id])
 
@@ -244,16 +318,16 @@ class TestConsequenceUpdateEndpoint:
         resp = client.put(self._get_url(UUID(int=0)))
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_put_404(self, client: Client, api_token: APIToken) -> None:
-        resp = client.get(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+    def test_put_404(self, client: Client, admin_user: User) -> None:
+        resp = client.get(self._get_url(UUID(int=0)), headers=self.get_headers(admin_user))
         assert resp.status_code == HTTPStatus.NOT_FOUND
 
-    def test_put_no_payload(self, client: Client, api_token: APIToken) -> None:
+    def test_put_no_payload(self, client: Client, admin_user: User) -> None:
         # Arrange
         consequence = ConsequenceFactory()
 
         # Act
-        resp = client.put(self._get_url(consequence.id), headers=self._get_headers(api_token))
+        resp = client.put(self._get_url(consequence.id), headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
@@ -317,7 +391,7 @@ class TestConsequenceUpdateEndpoint:
         ],
     )
     def test_put_bad_payload(
-        self, client: Client, api_token: APIToken, payload: dict[str, int], errors: list[dict]
+        self, client: Client, admin_user: User, payload: dict[str, int], errors: list[dict]
     ) -> None:
         # Arrange
         consequence = ConsequenceFactory()
@@ -325,7 +399,7 @@ class TestConsequenceUpdateEndpoint:
         # Act
         resp = client.put(
             self._get_url(consequence.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data=payload,
         )
@@ -334,6 +408,25 @@ class TestConsequenceUpdateEndpoint:
         assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         data = resp.json()
         assert data == {"status": "error", "status_code": 422, "status_name": "UNPROCESSABLE_ENTITY", "detail": errors}
+
+    def test_put_no_permission(
+        self,
+        client: Client,
+        user_with_person: User,
+    ) -> None:
+        # Arrange
+        consequence = ConsequenceFactory(created_by=user_with_person.person)
+
+        # Act
+        resp = client.put(
+            self._get_url(consequence.id),
+            headers=self.get_headers(user_with_person),
+            content_type="application/json",
+            data={"content": "bees", "is_enabled": False},
+        )
+
+        # Assert
+        self.assert_forbidden(resp)
 
     @pytest.mark.parametrize(
         ("payload", "expected_content", "expected_is_enabled"),
@@ -345,7 +438,7 @@ class TestConsequenceUpdateEndpoint:
     def test_put(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
         payload: dict,
         expected_content: str,
         expected_is_enabled: bool,  # noqa: FBT001
@@ -356,7 +449,7 @@ class TestConsequenceUpdateEndpoint:
         # Act
         resp = client.put(
             self._get_url(consequence.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data=payload,
         )
@@ -374,14 +467,7 @@ class TestConsequenceUpdateEndpoint:
 
 
 @pytest.mark.django_db
-class TestConsequencesDeleteEndpoint:
-    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {api_token.token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-
+class TestConsequencesDeleteEndpoint(APITest):
     def _get_url(self, consequence_id: UUID) -> str:
         return reverse_lazy("api-1.0.0:consequence_delete", args=[consequence_id])
 
@@ -389,17 +475,27 @@ class TestConsequencesDeleteEndpoint:
         resp = client.delete(self._get_url(UUID(int=0)))
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_delete_404(self, client: Client, api_token: APIToken) -> None:
-        resp = client.delete(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+    def test_delete_404(self, client: Client, admin_user: User) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)), headers=self.get_headers(admin_user))
         assert resp.status_code == HTTPStatus.NOT_FOUND
 
-    def test_delete(self, client: Client, api_token: APIToken) -> None:
+    def test_delete_no_permission(self, client: Client, user_with_person: User) -> None:
+        # Arrange
+        consequence = ConsequenceFactory(created_by=user_with_person.person)
+
+        # Act
+        resp = client.delete(self._get_url(consequence.id), headers=self.get_headers(user_with_person))
+
+        # Assert
+        self.assert_forbidden(resp)
+
+    def test_delete(self, client: Client, admin_user: User) -> None:
         # Arrange
         consequence = ConsequenceFactory()
         consequence_id = consequence.id
 
         # Act
-        resp = client.delete(self._get_url(consequence.id), headers=self._get_headers(api_token))
+        resp = client.delete(self._get_url(consequence.id), headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK

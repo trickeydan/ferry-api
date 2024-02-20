@@ -9,6 +9,7 @@ from ninja import Router, errors
 from ninja.pagination import paginate
 from ninja_extra.ordering import ordering
 
+from ferry.core.exceptions import ForbiddenError
 from ferry.core.schema import ConfirmationDetail, ErrorDetail
 from ferry.court.api.schema import ConsequenceCreate, ConsequenceDetail, ConsequenceUpdate
 from ferry.court.models import Consequence, Person
@@ -25,7 +26,7 @@ router = Router(tags=["Consequences"])
 @ordering(ordering_fields=["content", "created_at", "updated_at"])
 def consequence_list(request: HttpRequest) -> QuerySet[Consequence]:
     assert request.user.is_authenticated
-    return Consequence.objects.prefetch_related("created_by").all()
+    return Consequence.objects.for_user(request.user).prefetch_related("created_by").all()
 
 
 @router.post(
@@ -40,12 +41,18 @@ def consequence_list(request: HttpRequest) -> QuerySet[Consequence]:
 def consequence_create(request: HttpRequest, payload: ConsequenceCreate) -> Consequence:
     assert request.user.is_authenticated
 
+    if not request.user.has_perm("court.create_consequence"):
+        raise ForbiddenError()
+
     try:
         creator = Person.objects.get(id=payload.created_by)
     except Person.DoesNotExist:
         raise errors.ValidationError(
             [{"loc": "created_by", "detail": f"Unable to find person with ID {payload.created_by}"}]
         ) from None
+
+    if not request.user.has_perm("court.act_on_behalf_of_person", creator):
+        raise ForbiddenError("You cannot act on behalf of other people.")
 
     consequence = Consequence(
         content=payload.content,
@@ -74,7 +81,13 @@ def consequence_create(request: HttpRequest, payload: ConsequenceCreate) -> Cons
 )
 def consequence_detail(request: HttpRequest, consequence_id: UUID) -> Consequence:
     assert request.user.is_authenticated
-    return get_object_or_404(Consequence, id=consequence_id)
+
+    consequence = get_object_or_404(Consequence, id=consequence_id)
+
+    if not request.user.has_perm("court.view_consequence", consequence):
+        raise ForbiddenError()
+
+    return consequence
 
 
 @router.put(
@@ -90,6 +103,9 @@ def consequence_detail(request: HttpRequest, consequence_id: UUID) -> Consequenc
 def consequence_update(request: HttpRequest, consequence_id: UUID, payload: ConsequenceUpdate) -> Consequence:
     assert request.user.is_authenticated
     consequence = get_object_or_404(Consequence, id=consequence_id)
+
+    if not request.user.has_perm("court.edit_consequence", consequence):
+        raise ForbiddenError()
 
     # Update the consequence object
     consequence.content = payload.content
@@ -115,6 +131,9 @@ def consequence_update(request: HttpRequest, consequence_id: UUID, payload: Cons
 def consequence_delete(request: HttpRequest, consequence_id: UUID) -> ConfirmationDetail:
     assert request.user.is_authenticated
     consequence = get_object_or_404(Consequence, id=consequence_id)
+
+    if not request.user.has_perm("court.delete_consequence", consequence):
+        raise ForbiddenError()
 
     consequence.delete()
     return ConfirmationDetail()
