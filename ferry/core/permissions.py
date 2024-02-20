@@ -33,7 +33,7 @@ def user_is_person(user: User, person: Person) -> bool:
 # Global
 
 # Act on behalf of a person
-rules.add_perm("court.act_on_behalf_of_person", user_is_person | rules.is_superuser)
+rules.add_perm("court.act_for_person", user_is_person | rules.is_superuser)
 
 # Accusations
 

@@ -51,7 +51,7 @@ def consequence_create(request: HttpRequest, payload: ConsequenceCreate) -> Cons
             [{"loc": "created_by", "detail": f"Unable to find person with ID {payload.created_by}"}]
         ) from None
 
-    if not request.user.has_perm("court.act_on_behalf_of_person", creator):
+    if not request.user.has_perm("court.act_for_person", creator):
         raise ForbiddenError("You cannot act on behalf of other people.")
 
     consequence = Consequence(

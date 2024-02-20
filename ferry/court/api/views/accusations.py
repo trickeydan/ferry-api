@@ -64,7 +64,7 @@ def accusation_create(request: HttpRequest, payload: AccusationCreate) -> Accusa
             [{"loc": "__all__", "detail": "Unable to create accusation that suspects the creator."}]
         )
 
-    if not request.user.has_perm("court.act_on_behalf_of_person", creator):
+    if not request.user.has_perm("court.act_for_person", creator):
         raise ForbiddenError("You cannot act on behalf of other people.")
 
     accusation = Accusation(
