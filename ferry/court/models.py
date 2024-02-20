@@ -9,6 +9,7 @@ from django.db.models import Case, F, Func, Value, When
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
+from ferry.accounts.models import User
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 
 SCORE_FIELD: models.DecimalField = models.DecimalField(max_digits=3, decimal_places=2)
@@ -69,6 +70,13 @@ class Person(models.Model):
                 raise ValidationError("Unknown discord ID. Is the user part of the guild?") from None
 
 
+class ConsequenceQuerySet(models.QuerySet):
+    def for_user(self, user: User) -> "ConsequenceQuerySet":
+        if user.is_superuser:
+            return self
+        return self.filter(created_by_id=user.person_id)
+
+
 class Consequence(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     content = models.CharField(max_length=255)
@@ -76,6 +84,8 @@ class Consequence(models.Model):
     created_by = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="consequences")
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    objects = ConsequenceQuerySet.as_manager()
 
     class Meta:
         ordering = ["content"]
