@@ -58,3 +58,9 @@ rules.add_perm("court.delete_person", rules.is_superuser)
 
 # Trust as a source of verified Discord IDs
 rules.add_perm("court.assign_discord_id_to_person", rules.is_superuser)
+
+# Ratifications
+
+rules.add_perm("court.view_ratification", rules.always_allow)
+rules.add_perm("court.create_ratification", rules.always_allow)
+rules.add_perm("court.delete_ratification", rules.is_superuser)

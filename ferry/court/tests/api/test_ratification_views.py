@@ -5,13 +5,14 @@ import pytest
 from django.test import Client
 from django.urls import reverse_lazy
 
-from ferry.accounts.models import APIToken
+from ferry.accounts.models import User
 from ferry.court.factories import AccusationFactory, ConsequenceFactory, PersonFactory
-from ferry.court.models import Accusation, Ratification
+from ferry.court.models import Accusation, Person, Ratification
+from ferry.court.tests.utils import APITest
 
 
 @pytest.mark.django_db
-class TestRatificationDetailEndpoint:
+class TestRatificationDetailEndpoint(APITest):
     def _get_url(self, accusation_id: UUID) -> str:
         return reverse_lazy("api-1.0.0:ratification_detail", args=[accusation_id])
 
@@ -19,16 +20,16 @@ class TestRatificationDetailEndpoint:
         resp = client.get(self._get_url(UUID(int=0)))
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_get_404(self, client: Client, api_token: APIToken) -> None:
-        resp = client.get(self._get_url(UUID(int=0)), headers={"Authorization": f"Bearer {api_token.token}"})
+    def test_get_404(self, client: Client, admin_user: User) -> None:
+        resp = client.get(self._get_url(UUID(int=0)), headers=self.get_headers(admin_user))
         assert resp.status_code == HTTPStatus.NOT_FOUND
 
-    def test_get_unratified(self, client: Client, api_token: APIToken) -> None:
+    def test_get_unratified(self, client: Client, admin_user: User) -> None:
         # Arrange
         accusation = AccusationFactory()
 
         # Act
-        resp = client.get(self._get_url(accusation.id), headers={"Authorization": f"Bearer {api_token.token}"})
+        resp = client.get(self._get_url(accusation.id), headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
@@ -46,14 +47,7 @@ class TestRatificationDetailEndpoint:
 
 
 @pytest.mark.django_db
-class TestRatificationCreateEndpoint:
-    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {api_token.token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-
+class TestRatificationCreateEndpoint(APITest):
     def _get_url(self, accusation_id: UUID) -> str:
         return reverse_lazy("api-1.0.0:ratification_create", args=[accusation_id])
 
@@ -99,7 +93,7 @@ class TestRatificationCreateEndpoint:
         ],
     )
     def test_post_bad_payload(
-        self, client: Client, api_token: APIToken, payload: dict[str, int], errors: list[dict]
+        self, client: Client, admin_user: User, payload: dict[str, int], errors: list[dict]
     ) -> None:
         # Arrange
         accusation = AccusationFactory(ratification=None)
@@ -107,7 +101,7 @@ class TestRatificationCreateEndpoint:
         # Act
         resp = client.post(
             self._get_url(accusation_id=accusation.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data=payload,
         )
@@ -120,13 +114,13 @@ class TestRatificationCreateEndpoint:
     def test_post_no_such_person(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         accusation = AccusationFactory(ratification=None)
         # Act
         resp = client.post(
             self._get_url(accusation_id=accusation.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"created_by": UUID(int=0)},
         )
@@ -146,7 +140,7 @@ class TestRatificationCreateEndpoint:
     def test_post_ratifier_is_suspect(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         # Arrange
         ConsequenceFactory()
@@ -155,7 +149,7 @@ class TestRatificationCreateEndpoint:
         # Act
         resp = client.post(
             self._get_url(accusation_id=accusation.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"created_by": accusation.suspect.id},
         )
@@ -175,7 +169,7 @@ class TestRatificationCreateEndpoint:
     def test_post_ratifier_is_accuser(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         # Arrange
         ConsequenceFactory()
@@ -184,7 +178,7 @@ class TestRatificationCreateEndpoint:
         # Act
         resp = client.post(
             self._get_url(accusation_id=accusation.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"created_by": accusation.created_by.id},
         )
@@ -204,7 +198,7 @@ class TestRatificationCreateEndpoint:
     def test_post_no_consequences(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         # Arrange
         accusation = AccusationFactory(ratification=None)
@@ -213,7 +207,7 @@ class TestRatificationCreateEndpoint:
         # Act
         resp = client.post(
             self._get_url(accusation_id=accusation.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"created_by": ratifier.id},
         )
@@ -231,7 +225,7 @@ class TestRatificationCreateEndpoint:
     def test_post_already_ratified(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         # Arrange
         ConsequenceFactory()
@@ -241,7 +235,7 @@ class TestRatificationCreateEndpoint:
         # Act
         resp = client.post(
             self._get_url(accusation_id=accusation.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"created_by": ratifier.id},
         )
@@ -256,20 +250,47 @@ class TestRatificationCreateEndpoint:
             "status_name": "CONFLICT",
         }
 
-    def test_post(
+    def test_post_no_permission(
         self,
         client: Client,
-        api_token: APIToken,
+        user_with_person: User,
     ) -> None:
         # Arrange
-        consequences = ConsequenceFactory.create_batch(size=10)
+        ConsequenceFactory()
         accusation = AccusationFactory(ratification=None)
         ratifier = PersonFactory()
 
         # Act
         resp = client.post(
             self._get_url(accusation_id=accusation.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(user_with_person),
+            content_type="application/json",
+            data={"created_by": ratifier.id},
+        )
+
+        # Assert
+        assert resp.status_code == HTTPStatus.FORBIDDEN
+        data = resp.json()
+        assert data == {
+            "status": "error",
+            "status_code": 403,
+            "status_name": "FORBIDDEN",
+            "detail": "You cannot act on behalf of other people.",
+        }
+
+    def _test_post(
+        self,
+        client: Client,
+        user: User,
+        accusation: Accusation,
+        ratifier: Person,
+    ) -> None:
+        consequences = ConsequenceFactory.create_batch(size=10)
+
+        # Act
+        resp = client.post(
+            self._get_url(accusation_id=accusation.id),
+            headers=self.get_headers(user),
             content_type="application/json",
             data={"created_by": ratifier.id},
         )
@@ -289,16 +310,29 @@ class TestRatificationCreateEndpoint:
         assert ratification.accusation == accusation
         assert ratification.consequence in consequences
 
+    def test_post_admin(
+        self,
+        client: Client,
+        admin_user: User,
+    ) -> None:
+        accusation = AccusationFactory(ratification=None)
+        ratifier = PersonFactory()
+
+        self._test_post(client, admin_user, accusation, ratifier)
+
+    def test_post(
+        self,
+        client: Client,
+        user_with_person: User,
+    ) -> None:
+        assert user_with_person.person is not None
+        accusation = AccusationFactory(ratification=None)
+        ratifier = user_with_person.person
+        self._test_post(client, user_with_person, accusation, ratifier)
+
 
 @pytest.mark.django_db
-class TestRatificationDeleteEndpoint:
-    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {api_token.token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-
+class TestRatificationDeleteEndpoint(APITest):
     def _get_url(self, accusation_id: UUID) -> str:
         return reverse_lazy("api-1.0.0:ratification_delete", args=[accusation_id])
 
@@ -306,11 +340,29 @@ class TestRatificationDeleteEndpoint:
         resp = client.delete(self._get_url(UUID(int=0)))
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_delete_404(self, client: Client, api_token: APIToken) -> None:
-        resp = client.delete(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+    def test_delete_404(self, client: Client, admin_user: User) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)), headers=self.get_headers(admin_user))
         assert resp.status_code == HTTPStatus.NOT_FOUND
 
-    def test_delete(self, client: Client, api_token: APIToken) -> None:
+    def test_delete_no_permission(self, client: Client, user_with_person: User) -> None:
+        # Arrange
+        accusation = AccusationFactory()
+        accusation_id = accusation.id
+
+        # Act
+        resp = client.delete(self._get_url(accusation.id), headers=self.get_headers(user_with_person))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.FORBIDDEN
+        data = resp.json()
+        assert data == {
+            "status": "error",
+            "status_code": 403,
+            "status_name": "FORBIDDEN",
+            "detail": "You don't have permission to perform that action",
+        }
+
+    def test_delete(self, client: Client, admin_user: User) -> None:
         # Arrange
         accusation = AccusationFactory()
         accusation_id = accusation.id
@@ -319,7 +371,7 @@ class TestRatificationDeleteEndpoint:
         assert Ratification.objects.filter(accusation_id=accusation_id).exists()
 
         # Act
-        resp = client.delete(self._get_url(accusation.id), headers=self._get_headers(api_token))
+        resp = client.delete(self._get_url(accusation.id), headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
