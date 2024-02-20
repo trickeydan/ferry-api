@@ -100,6 +100,12 @@ class Consequence(models.Model):
         return self.content
 
 
+class AccusationQuerySet(models.QuerySet):
+    def for_user(self, user: User) -> AccusationQuerySet:
+        # All users can read all accusations
+        return self
+
+
 class Accusation(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     quote = models.TextField(
@@ -109,6 +115,8 @@ class Accusation(models.Model):
     created_by = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="accusations_created")
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    objects = AccusationQuerySet.as_manager()
 
     class Meta:
         ordering = ["-created_at"]

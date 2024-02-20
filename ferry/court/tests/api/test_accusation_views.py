@@ -5,31 +5,32 @@ import pytest
 from django.test import Client
 from django.urls import reverse_lazy
 
-from ferry.accounts.models import APIToken
+from ferry.accounts.models import User
 from ferry.court.factories import AccusationFactory, PersonFactory
-from ferry.court.models import Accusation, Ratification
+from ferry.court.models import Accusation, Person, Ratification
+from ferry.court.tests.utils import APITest
 
 
 @pytest.mark.django_db
-class TestAccusationListEndpoint:
+class TestAccusationListEndpoint(APITest):
     url = reverse_lazy("api-1.0.0:accusation_list")
 
     def test_get_unauthenticated(self, client: Client) -> None:
         resp = client.get(self.url)
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_get_no_results(self, client: Client, api_token: APIToken) -> None:
-        resp = client.get(self.url, headers={"Authorization": f"Bearer {api_token.token}"})
+    def test_get_no_results(self, client: Client, admin_user: User) -> None:
+        resp = client.get(self.url, headers=self.get_headers(admin_user))
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
         assert data == {"items": [], "count": 0}
 
-    def test_get(self, client: Client, api_token: APIToken) -> None:
+    def test_get(self, client: Client, admin_user: User) -> None:
         # Arrange
         expected_ids = [str(AccusationFactory().id) for _ in range(10)]
 
         # Act
-        resp = client.get(self.url, headers={"Authorization": f"Bearer {api_token.token}"})
+        resp = client.get(self.url, headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
@@ -42,14 +43,7 @@ class TestAccusationListEndpoint:
 
 
 @pytest.mark.django_db
-class TestAccusationCreateEndpoint:
-    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {api_token.token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-
+class TestAccusationCreateEndpoint(APITest):
     def _get_url(self) -> str:
         return reverse_lazy("api-1.0.0:accusation_create")
 
@@ -126,12 +120,12 @@ class TestAccusationCreateEndpoint:
         ],
     )
     def test_post_bad_payload(
-        self, client: Client, api_token: APIToken, payload: dict[str, int], errors: list[dict]
+        self, client: Client, admin_user: User, payload: dict[str, int], errors: list[dict]
     ) -> None:
         # Act
         resp = client.post(
             self._get_url(),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data=payload,
         )
@@ -144,12 +138,12 @@ class TestAccusationCreateEndpoint:
     def test_post_no_such_person(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         # Act
         resp = client.post(
             self._get_url(),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"quote": "bees", "suspect": UUID(int=1), "created_by": UUID(int=0)},
         )
@@ -170,7 +164,7 @@ class TestAccusationCreateEndpoint:
     def test_post_empty_quote(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         # Arrange
         suspect = PersonFactory()
@@ -179,7 +173,7 @@ class TestAccusationCreateEndpoint:
         # Act
         resp = client.post(
             self._get_url(),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"quote": "", "suspect": suspect.id, "created_by": created_by.id},
         )
@@ -199,7 +193,7 @@ class TestAccusationCreateEndpoint:
     def test_post_suspect_is_creator(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         # Arrange
         person = PersonFactory()
@@ -207,7 +201,7 @@ class TestAccusationCreateEndpoint:
         # Act
         resp = client.post(
             self._get_url(),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"quote": "bees", "suspect": person.id, "created_by": person.id},
         )
@@ -224,19 +218,37 @@ class TestAccusationCreateEndpoint:
             ],
         }
 
-    def test_post(
+    def test_post_not_permitted_to_create(
         self,
         client: Client,
-        api_token: APIToken,
+        user_with_person: User,
     ) -> None:
-        # Arrange
         suspect = PersonFactory()
-        created_by = PersonFactory()
+        creator = PersonFactory()
 
         # Act
         resp = client.post(
             self._get_url(),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(user_with_person),
+            content_type="application/json",
+            data={"quote": "bees", "suspect": suspect.id, "created_by": creator.id},
+        )
+
+        # Assert
+        assert resp.status_code == HTTPStatus.FORBIDDEN
+        data = resp.json()
+        assert data == {
+            "status": "error",
+            "status_code": 403,
+            "status_name": "FORBIDDEN",
+            "detail": "You cannot act on behalf of other people.",
+        }
+
+    def _test_post(self, client: Client, user: User, suspect: Person, created_by: Person) -> None:
+        # Act
+        resp = client.post(
+            self._get_url(),
+            headers=self.get_headers(user),
             content_type="application/json",
             data={"quote": "bees", "suspect": suspect.id, "created_by": created_by.id},
         )
@@ -262,9 +274,27 @@ class TestAccusationCreateEndpoint:
         with pytest.raises(Ratification.DoesNotExist):
             _ = accusation.ratification
 
+    def test_post_admin(
+        self,
+        client: Client,
+        admin_user: User,
+    ) -> None:
+        suspect = PersonFactory()
+        created_by = PersonFactory()
+        self._test_post(client, admin_user, suspect, created_by)
+
+    def test_post(
+        self,
+        client: Client,
+        user_with_person: User,
+    ) -> None:
+        assert user_with_person.person is not None
+        suspect = PersonFactory()
+        self._test_post(client, user_with_person, suspect, user_with_person.person)
+
 
 @pytest.mark.django_db
-class TestAccusationDetailEndpoint:
+class TestAccusationDetailEndpoint(APITest):
     def _get_url(self, accusation_id: UUID) -> str:
         return reverse_lazy("api-1.0.0:accusation_detail", args=[accusation_id])
 
@@ -272,16 +302,16 @@ class TestAccusationDetailEndpoint:
         resp = client.get(self._get_url(UUID(int=0)))
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_get_404(self, client: Client, api_token: APIToken) -> None:
-        resp = client.get(self._get_url(UUID(int=0)), headers={"Authorization": f"Bearer {api_token.token}"})
+    def test_get_404(self, client: Client, admin_user: User) -> None:
+        resp = client.get(self._get_url(UUID(int=0)), headers=self.get_headers(admin_user))
         assert resp.status_code == HTTPStatus.NOT_FOUND
 
-    def test_get_unratified(self, client: Client, api_token: APIToken) -> None:
+    def test_get_unratified(self, client: Client, admin_user: User) -> None:
         # Arrange
         accusation = AccusationFactory(ratification=None)
 
         # Act
-        resp = client.get(self._get_url(accusation.id), headers={"Authorization": f"Bearer {api_token.token}"})
+        resp = client.get(self._get_url(accusation.id), headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
@@ -298,12 +328,12 @@ class TestAccusationDetailEndpoint:
             "display_name": accusation.created_by.display_name,
         }
 
-    def test_get_ratified(self, client: Client, api_token: APIToken) -> None:
+    def test_get_ratified(self, client: Client, admin_user: User) -> None:
         # Arrange
         accusation = AccusationFactory()
 
         # Act
-        resp = client.get(self._get_url(accusation.id), headers={"Authorization": f"Bearer {api_token.token}"})
+        resp = client.get(self._get_url(accusation.id), headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
@@ -330,14 +360,7 @@ class TestAccusationDetailEndpoint:
 
 
 @pytest.mark.django_db
-class TestAccusationUpdateEndpoint:
-    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {api_token.token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-
+class TestAccusationUpdateEndpoint(APITest):
     def _get_url(self, accusation_id: UUID) -> str:
         return reverse_lazy("api-1.0.0:accusation_update", args=[accusation_id])
 
@@ -345,16 +368,16 @@ class TestAccusationUpdateEndpoint:
         resp = client.put(self._get_url(UUID(int=0)))
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_put_404(self, client: Client, api_token: APIToken) -> None:
-        resp = client.get(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+    def test_put_404(self, client: Client, admin_user: User) -> None:
+        resp = client.get(self._get_url(UUID(int=0)), headers=self.get_headers(admin_user))
         assert resp.status_code == HTTPStatus.NOT_FOUND
 
-    def test_put_no_payload(self, client: Client, api_token: APIToken) -> None:
+    def test_put_no_payload(self, client: Client, admin_user: User) -> None:
         # Arrange
         accusation = AccusationFactory()
 
         # Act
-        resp = client.put(self._get_url(accusation.id), headers=self._get_headers(api_token))
+        resp = client.put(self._get_url(accusation.id), headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
@@ -414,7 +437,7 @@ class TestAccusationUpdateEndpoint:
         ],
     )
     def test_put_bad_payload(
-        self, client: Client, api_token: APIToken, payload: dict[str, int], errors: list[dict]
+        self, client: Client, admin_user: User, payload: dict[str, int], errors: list[dict]
     ) -> None:
         # Arrange
         accusation = AccusationFactory()
@@ -422,7 +445,7 @@ class TestAccusationUpdateEndpoint:
         # Act
         resp = client.put(
             self._get_url(accusation.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data=payload,
         )
@@ -435,7 +458,7 @@ class TestAccusationUpdateEndpoint:
     def test_put(
         self,
         client: Client,
-        api_token: APIToken,
+        admin_user: User,
     ) -> None:
         # Arrange
         accusation = AccusationFactory(quote="bees")
@@ -443,7 +466,7 @@ class TestAccusationUpdateEndpoint:
         # Act
         resp = client.put(
             self._get_url(accusation.id),
-            headers=self._get_headers(api_token),
+            headers=self.get_headers(admin_user),
             content_type="application/json",
             data={"quote": "wasps"},
         )
@@ -459,14 +482,7 @@ class TestAccusationUpdateEndpoint:
 
 
 @pytest.mark.django_db
-class TestAccusationDeleteEndpoint:
-    def _get_headers(self, api_token: APIToken) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {api_token.token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-
+class TestAccusationDeleteEndpoint(APITest):
     def _get_url(self, person_id: UUID) -> str:
         return reverse_lazy("api-1.0.0:accusation_delete", args=[person_id])
 
@@ -474,17 +490,17 @@ class TestAccusationDeleteEndpoint:
         resp = client.delete(self._get_url(UUID(int=0)))
         assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_delete_404(self, client: Client, api_token: APIToken) -> None:
-        resp = client.delete(self._get_url(UUID(int=0)), headers=self._get_headers(api_token))
+    def test_delete_404(self, client: Client, admin_user: User) -> None:
+        resp = client.delete(self._get_url(UUID(int=0)), headers=self.get_headers(admin_user))
         assert resp.status_code == HTTPStatus.NOT_FOUND
 
-    def test_delete(self, client: Client, api_token: APIToken) -> None:
+    def test_delete(self, client: Client, admin_user: User) -> None:
         # Arrange
         accusation = AccusationFactory()
         accusation_id = accusation.id
 
         # Act
-        resp = client.delete(self._get_url(accusation.id), headers=self._get_headers(api_token))
+        resp = client.delete(self._get_url(accusation.id), headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK

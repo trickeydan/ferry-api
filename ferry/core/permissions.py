@@ -3,13 +3,13 @@ from __future__ import annotations
 import rules
 
 from ferry.accounts.models import User
-from ferry.court.models import Consequence, Person
+from ferry.court.models import Accusation, Consequence, Person
 
 
 @rules.predicate  # type: ignore[misc]
-def user_is_person(user: User, person: Person) -> bool:
+def user_created_accusation(user: User, accusation: Accusation) -> bool:
     try:
-        return user.person == person
+        return user.person == accusation.created_by
     except Person.DoesNotExist:
         return False
 
@@ -22,10 +22,25 @@ def user_created_consequence(user: User, consequence: Consequence) -> bool:
         return False
 
 
+@rules.predicate  # type: ignore[misc]
+def user_is_person(user: User, person: Person) -> bool:
+    try:
+        return user.person == person
+    except Person.DoesNotExist:
+        return False
+
+
 # Global
 
 # Act on behalf of a person
 rules.add_perm("court.act_on_behalf_of_person", user_is_person | rules.is_superuser)
+
+# Accusations
+
+rules.add_perm("court.view_accusation", rules.always_allow)
+rules.add_perm("court.create_accusation", rules.always_allow)
+rules.add_perm("court.edit_accusation", user_created_accusation | rules.is_superuser)
+rules.add_perm("court.delete_accusation", rules.is_superuser)
 
 # Consequences
 

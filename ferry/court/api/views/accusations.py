@@ -9,6 +9,7 @@ from ninja import Router, errors
 from ninja.pagination import paginate
 from ninja_extra.ordering import ordering
 
+from ferry.core.exceptions import ForbiddenError
 from ferry.core.schema import ConfirmationDetail, ErrorDetail
 from ferry.court.api.schema import AccusationCreate, AccusationDetail, AccusationUpdate
 from ferry.court.models import Accusation, Person
@@ -25,7 +26,7 @@ router = Router(tags=["Accusations"])
 @ordering(ordering_fields=["content", "created_at", "updated_at"])
 def accusation_list(request: HttpRequest) -> QuerySet[Accusation]:
     assert request.user.is_authenticated
-    return Accusation.objects.prefetch_related("created_by", "suspect").all()
+    return Accusation.objects.for_user(request.user).prefetch_related("created_by", "suspect").all()
 
 
 @router.post(
@@ -39,6 +40,9 @@ def accusation_list(request: HttpRequest) -> QuerySet[Accusation]:
 )
 def accusation_create(request: HttpRequest, payload: AccusationCreate) -> Accusation:
     assert request.user.is_authenticated
+
+    if not request.user.has_perm("court.create_accusation"):
+        raise ForbiddenError()
 
     error_list = []
 
@@ -59,6 +63,9 @@ def accusation_create(request: HttpRequest, payload: AccusationCreate) -> Accusa
         raise errors.ValidationError(
             [{"loc": "__all__", "detail": "Unable to create accusation that suspects the creator."}]
         )
+
+    if not request.user.has_perm("court.act_on_behalf_of_person", creator):
+        raise ForbiddenError("You cannot act on behalf of other people.")
 
     accusation = Accusation(
         quote=payload.quote,
@@ -87,7 +94,12 @@ def accusation_create(request: HttpRequest, payload: AccusationCreate) -> Accusa
 )
 def accusation_detail(request: HttpRequest, accusation_id: UUID) -> Accusation:
     assert request.user.is_authenticated
-    return get_object_or_404(Accusation, id=accusation_id)
+    accusation = get_object_or_404(Accusation, id=accusation_id)
+
+    if not request.user.has_perm("court.view_accusation", accusation):
+        raise ForbiddenError()
+
+    return accusation
 
 
 @router.put(
@@ -103,6 +115,9 @@ def accusation_detail(request: HttpRequest, accusation_id: UUID) -> Accusation:
 def accusation_update(request: HttpRequest, accusation_id: UUID, payload: AccusationUpdate) -> Accusation:
     assert request.user.is_authenticated
     accusation = get_object_or_404(Accusation, id=accusation_id)
+
+    if not request.user.has_perm("court.edit_accusation", accusation):
+        raise ForbiddenError()
 
     # Update the accusation object
     accusation.quote = payload.quote
@@ -127,6 +142,9 @@ def accusation_update(request: HttpRequest, accusation_id: UUID, payload: Accusa
 def accusation_delete(request: HttpRequest, accusation_id: UUID) -> ConfirmationDetail:
     assert request.user.is_authenticated
     accusation = get_object_or_404(Accusation, id=accusation_id)
+
+    if not request.user.has_perm("court.delete_accusation", accusation):
+        raise ForbiddenError()
 
     accusation.delete()
     return ConfirmationDetail()
