@@ -9,6 +9,7 @@ from ninja import Router, errors
 from ninja.pagination import paginate
 from ninja_extra.ordering import ordering
 
+from ferry.core.exceptions import ForbiddenError
 from ferry.core.schema import ConfirmationDetail, ErrorDetail
 from ferry.court.api.schema import PersonDetail, PersonUpdate
 from ferry.court.models import Person
@@ -25,7 +26,7 @@ router = Router(tags=["People"])
 @ordering
 def people_list(request: HttpRequest) -> QuerySet[Person]:
     assert request.user.is_authenticated
-    return Person.objects.with_current_score().all()
+    return Person.objects.for_user(request.user).with_current_score().all()
 
 
 @router.post(
@@ -39,6 +40,10 @@ def people_list(request: HttpRequest) -> QuerySet[Person]:
 )
 def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
     assert request.user.is_authenticated
+
+    if not request.user.has_perm("court.create_person"):
+        raise ForbiddenError()
+
     person = Person(
         display_name=payload.display_name,
         discord_id=payload.discord_id,
@@ -66,7 +71,13 @@ def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
 )
 def people_detail_by_discord_id(request: HttpRequest, discord_id: int) -> Person:
     assert request.user.is_authenticated
-    return get_object_or_404(Person.objects.with_current_score(), discord_id=discord_id)
+
+    person = get_object_or_404(Person.objects.with_current_score(), discord_id=discord_id)
+
+    if not request.user.has_perm("court.view_person", person):
+        raise ForbiddenError()
+
+    return person
 
 
 @router.get(
@@ -82,7 +93,13 @@ def people_detail_by_discord_id(request: HttpRequest, discord_id: int) -> Person
 )
 def people_detail(request: HttpRequest, person_id: UUID) -> Person:
     assert request.user.is_authenticated
-    return get_object_or_404(Person.objects.with_current_score(), id=person_id)
+
+    person = get_object_or_404(Person.objects.with_current_score(), id=person_id)
+
+    if not request.user.has_perm("court.view_person", person):
+        raise ForbiddenError()
+
+    return person
 
 
 @router.put(
@@ -98,6 +115,9 @@ def people_detail(request: HttpRequest, person_id: UUID) -> Person:
 def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) -> Person:
     assert request.user.is_authenticated
     person = get_object_or_404(Person, id=person_id)
+
+    if not request.user.has_perm("court.edit_person", person):
+        raise ForbiddenError()
 
     # Update the person object
     person.display_name = payload.display_name
@@ -125,6 +145,10 @@ def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) 
 def people_delete(request: HttpRequest, person_id: UUID) -> ConfirmationDetail:
     assert request.user.is_authenticated
     person = get_object_or_404(Person, id=person_id)
+
+    if not request.user.has_perm("court.delete_person", person):
+        raise ForbiddenError()
+
     person.delete()
 
     return ConfirmationDetail()

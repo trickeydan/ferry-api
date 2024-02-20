@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from collections.abc import Collection
 from datetime import datetime
@@ -16,7 +18,11 @@ SCORE_FIELD: models.DecimalField = models.DecimalField(max_digits=3, decimal_pla
 
 
 class PersonQuerySet(models.QuerySet):
-    def with_num_ratified_accusations(self) -> models.QuerySet["Person"]:
+    def for_user(self, user: User) -> PersonQuerySet:
+        # All users can read all people
+        return self
+
+    def with_num_ratified_accusations(self) -> models.QuerySet[Person]:
         ratifications = (
             Ratification.objects.filter(accusation__suspect_id=models.OuterRef("id"))
             .order_by()
@@ -27,7 +33,7 @@ class PersonQuerySet(models.QuerySet):
             num_ratified_accusations=models.Subquery(ratifications, output_field=models.PositiveIntegerField())
         )
 
-    def with_current_score(self) -> models.QuerySet["Person"]:
+    def with_current_score(self) -> models.QuerySet[Person]:
         ratifications = (
             Ratification.objects.filter(accusation__suspect_id=models.OuterRef("id"))
             .order_by()
@@ -71,7 +77,7 @@ class Person(models.Model):
 
 
 class ConsequenceQuerySet(models.QuerySet):
-    def for_user(self, user: User) -> "ConsequenceQuerySet":
+    def for_user(self, user: User) -> ConsequenceQuerySet:
         if user.is_superuser:
             return self
         return self.filter(created_by_id=user.person_id)
@@ -122,7 +128,7 @@ class Accusation(models.Model):
 
 
 class RatificationQuerySet(models.QuerySet):
-    def with_score_value(self) -> "RatificationQuerySet":
+    def with_score_value(self) -> RatificationQuerySet:
         now = timezone.now()
         most_recent_september_year = now.year - 1 if now.month < 9 else now.year
         most_recent_september = datetime(
