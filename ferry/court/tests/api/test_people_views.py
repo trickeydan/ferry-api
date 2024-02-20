@@ -440,22 +440,12 @@ class TestPeopleUpdateEndpoint(APITest):
 
         self._test_put(client, admin_user, person, payload, expected_display_name, expected_discord_id)
 
-    @pytest.mark.parametrize(
-        ("payload", "expected_display_name", "expected_discord_id"),
-        [
-            pytest.param({"display_name": "bees", "discord_id": None}, "bees", None, id="remove-discord"),
-            pytest.param({"display_name": "wasps", "discord_id": 9876543210}, "wasps", 9876543210, id="update-both"),
-        ],
-    )
     @patch("ferry.court.models.get_discord_client")
     def test_put(
         self,
         mock_get_discord_client: Mock,
         client: Client,
         user_with_person: User,
-        payload: dict,
-        expected_display_name: str | None,
-        expected_discord_id: int | None,
     ) -> None:
         # Arrange
         # We are not updating the ID here as we have no permission
@@ -527,6 +517,31 @@ class TestPeopleUpdateEndpoint(APITest):
             "status_code": 403,
             "status_name": "FORBIDDEN",
             "detail": "You don't have permission to perform that action",
+        }
+
+    def test_put_cannot_edit_discord_id(
+        self,
+        client: Client,
+        user_with_person: User,
+    ) -> None:
+        # Arrange
+        assert user_with_person.person is not None
+
+        # Act
+        resp = client.put(
+            self._get_url(user_with_person.person.id),
+            headers=self.get_headers(user_with_person),
+            content_type="application/json",
+            data={"display_name": "wasps", "discord_id": 1234},
+        )
+
+        # Assert
+        assert resp.status_code == HTTPStatus.FORBIDDEN
+        assert resp.json() == {
+            "status": "error",
+            "status_code": 403,
+            "status_name": "FORBIDDEN",
+            "detail": "You don't have permission to update a Discord ID directly.",
         }
 
 

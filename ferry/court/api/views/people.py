@@ -44,6 +44,9 @@ def people_create(request: HttpRequest, payload: PersonUpdate) -> Person:
     if not request.user.has_perm("court.create_person"):
         raise ForbiddenError()
 
+    if payload.discord_id and not request.user.has_perm("court.assign_discord_id_to_person"):
+        raise ForbiddenError("You don't have permission to assign a Discord ID directly.")
+
     person = Person(
         display_name=payload.display_name,
         discord_id=payload.discord_id,
@@ -118,6 +121,9 @@ def people_update(request: HttpRequest, person_id: UUID, payload: PersonUpdate) 
 
     if not request.user.has_perm("court.edit_person", person):
         raise ForbiddenError()
+
+    if payload.discord_id != person.discord_id and not request.user.has_perm("court.assign_discord_id_to_person"):
+        raise ForbiddenError("You don't have permission to update a Discord ID directly.")
 
     # Update the person object
     person.display_name = payload.display_name
