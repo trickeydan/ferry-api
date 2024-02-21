@@ -16,6 +16,7 @@ ALLOWED_HOSTS: list[str] = []
 
 INSTALLED_APPS = [
     "ferry.accounts",
+    "ferry.api",
     "ferry.court",
     "rules",
     "django.contrib.admin",

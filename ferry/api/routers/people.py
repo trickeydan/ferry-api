@@ -9,9 +9,9 @@ from ninja import Router, errors
 from ninja.pagination import paginate
 from ninja_extra.ordering import ordering
 
+from ferry.api.schema.core import ConfirmationDetail, ErrorDetail
+from ferry.api.schema.court import PersonDetail, PersonUpdate
 from ferry.core.exceptions import ForbiddenError
-from ferry.core.schema import ConfirmationDetail, ErrorDetail
-from ferry.court.api.schema import PersonDetail, PersonUpdate
 from ferry.court.models import Person
 
 router = Router(tags=["People"])

@@ -2,9 +2,8 @@ from django.http import HttpRequest
 from ninja import Router
 
 from ferry.accounts.models import User
-from ferry.core.schema import ErrorDetail
-
-from .schema import UserInfo
+from ferry.api.schema.core import ErrorDetail
+from ferry.api.schema.users import UserInfo
 
 router = Router()
 

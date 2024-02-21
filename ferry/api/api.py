@@ -5,12 +5,15 @@ from django.http import Http404, HttpRequest, HttpResponse
 from ninja import NinjaAPI, Swagger, errors
 from ninja.security import HttpBearer
 
-from ferry.accounts.api import router as accounts_api
 from ferry.accounts.models import APIToken
+from ferry.api.routers.accusations import router as accusations_router
+from ferry.api.routers.consequences import router as consequences_router
+from ferry.api.routers.people import router as people_router
+from ferry.api.routers.ratifications import router as ratifications_router
+from ferry.api.routers.users import router as users_router
 from ferry.core.exceptions import ConflictError, ForbiddenError, InternalServerError
-from ferry.court.api import router as court_api
 
-from .schema import ErrorDetail
+from .schema.core import ErrorDetail
 
 
 class TokenAuth(HttpBearer):
@@ -25,8 +28,11 @@ class TokenAuth(HttpBearer):
 
 api = NinjaAPI(title="Ferry API", auth=TokenAuth(), docs=Swagger(settings={"persistAuthorization": True}))
 
-api.add_router("/users", accounts_api)
-api.add_router("/", court_api)
+api.add_router("/accusations", accusations_router)
+api.add_router("/consequences", consequences_router)
+api.add_router("/people", people_router)
+api.add_router("ratifications", ratifications_router)
+api.add_router("/users", users_router)
 
 
 @api.exception_handler(errors.AuthenticationError)

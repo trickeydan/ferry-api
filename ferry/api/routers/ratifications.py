@@ -7,9 +7,9 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from ninja import Router, errors
 
+from ferry.api.schema.core import ConfirmationDetail, ErrorDetail
+from ferry.api.schema.court import RatificationCreate, RatificationDetail
 from ferry.core.exceptions import ConflictError, ForbiddenError, InternalServerError
-from ferry.core.schema import ConfirmationDetail, ErrorDetail
-from ferry.court.api.schema import RatificationCreate, RatificationDetail
 from ferry.court.models import Accusation, Consequence, Person, Ratification
 
 router = Router(tags=["Ratifications"])
