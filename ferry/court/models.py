@@ -80,7 +80,11 @@ class ConsequenceQuerySet(models.QuerySet):
     def for_user(self, user: User) -> ConsequenceQuerySet:
         if user.is_superuser:
             return self
-        return self.filter(created_by_id=user.person_id)
+
+        # If the user has a person, filter to consequences that they own.
+        if user.person_id:
+            return self.filter(created_by_id=user.person_id)
+        return self.none()
 
 
 class Consequence(models.Model):
