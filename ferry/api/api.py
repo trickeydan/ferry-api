@@ -29,9 +29,9 @@ class TokenAuth(HttpBearer):
 api = NinjaAPI(title="Ferry API", auth=TokenAuth(), docs=Swagger(settings={"persistAuthorization": True}))
 
 api.add_router("/accusations", accusations_router)
+api.add_router("/accusations", ratifications_router)
 api.add_router("/consequences", consequences_router)
 api.add_router("/people", people_router)
-api.add_router("ratifications", ratifications_router)
 api.add_router("/users", users_router)
 
 
