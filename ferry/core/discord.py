@@ -18,7 +18,7 @@ class DiscordClient:
             "Content-Type": "application/json",
             "Authorization": f"Bot {self._bot_token}",
         }
-        resp = requests.request(method, f"https://discord.com/api/v10/{endpoint}", headers=headers)
+        resp = requests.request(method, f"https://discord.com/api/v10/{endpoint}", headers=headers, timeout=2)
         resp.raise_for_status()
         return resp.json()
 

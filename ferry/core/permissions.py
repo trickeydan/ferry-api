@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-call"
 from __future__ import annotations
 
 import rules

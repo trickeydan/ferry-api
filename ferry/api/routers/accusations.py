@@ -23,7 +23,7 @@ router = Router(tags=["Accusations"])
     summary="Get a list of all accusations",
 )
 @paginate
-@ordering(ordering_fields=["content", "created_at", "updated_at"])
+@ordering(ordering_fields=["quote", "created_at", "updated_at"])
 def accusation_list(request: HttpRequest) -> QuerySet[Accusation]:
     assert request.user.is_authenticated
     return Accusation.objects.for_user(request.user).prefetch_related("created_by", "suspect").all()
