@@ -6,7 +6,7 @@ from django.test import Client
 from django.urls import reverse_lazy
 
 from ferry.accounts.models import User
-from ferry.api.tests.utils import APITest
+from ferry.api_legacy.tests.utils import APITest
 from ferry.court.factories import AccusationFactory, ConsequenceFactory, PersonFactory
 from ferry.court.models import Accusation, Person, Ratification
 

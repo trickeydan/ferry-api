@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class ApiConfig(AppConfig):
+class ApiLegacyConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "ferry.api"
+    name = "ferry.api_legacy"

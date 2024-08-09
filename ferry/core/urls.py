@@ -21,7 +21,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import path
 from django.views.generic import TemplateView
 
-from ferry.api.api import urls as api_urls
+from ferry.api_legacy.api import urls as api_urls
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="home.html")),

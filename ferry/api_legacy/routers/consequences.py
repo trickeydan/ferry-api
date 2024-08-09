@@ -9,8 +9,8 @@ from ninja import Router, errors
 from ninja.pagination import paginate
 from ninja_extra.ordering import ordering
 
-from ferry.api.schema.core import ConfirmationDetail, ErrorDetail
-from ferry.api.schema.court import ConsequenceCreate, ConsequenceDetail, ConsequenceUpdate
+from ferry.api_legacy.schema.core import ConfirmationDetail, ErrorDetail
+from ferry.api_legacy.schema.court import ConsequenceCreate, ConsequenceDetail, ConsequenceUpdate
 from ferry.core.exceptions import ForbiddenError
 from ferry.court.models import Consequence, Person
 

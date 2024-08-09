@@ -1,6 +1,6 @@
 from ninja import Schema
 
-from ferry.api.schema.court import PersonLink
+from ferry.api_legacy.schema.court import PersonLink
 
 
 class UserInfo(Schema):

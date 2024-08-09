@@ -6,11 +6,11 @@ from ninja import NinjaAPI, Swagger, errors
 from ninja.security import HttpBearer
 
 from ferry.accounts.models import APIToken
-from ferry.api.routers.accusations import router as accusations_router
-from ferry.api.routers.consequences import router as consequences_router
-from ferry.api.routers.people import router as people_router
-from ferry.api.routers.ratifications import router as ratifications_router
-from ferry.api.routers.users import router as users_router
+from ferry.api_legacy.routers.accusations import router as accusations_router
+from ferry.api_legacy.routers.consequences import router as consequences_router
+from ferry.api_legacy.routers.people import router as people_router
+from ferry.api_legacy.routers.ratifications import router as ratifications_router
+from ferry.api_legacy.routers.users import router as users_router
 from ferry.core.exceptions import ConflictError, ForbiddenError, InternalServerError
 
 from .schema.core import ErrorDetail
