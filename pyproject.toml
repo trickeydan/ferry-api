@@ -15,6 +15,7 @@ django-stubs-ext = "^5"
 requests = "^2.31.0"
 rules = "^3.3"
 djangorestframework = "^3.15.2"
+drf-spectacular = "^0.27.2"
 
 [tool.poetry.group.prod.dependencies]
 gunicorn = "^21.2.0"
@@ -32,6 +33,7 @@ django-stubs = {version = "^5", extras = ["compatible-mypy"]}
 factory-boy = "^3.3.0"
 types-requests = "^2.31.0.20240125"
 time-machine = "^2.13.0"
+djangorestframework-stubs = "^3.15.0"
 
 [tool.ruff]
 target-version = "py311"

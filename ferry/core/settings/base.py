@@ -18,6 +18,8 @@ INSTALLED_APPS = [
     "ferry.accounts",
     "ferry.api_legacy",
     "ferry.court",
+    "drf_spectacular",
+    "rest_framework",
     "rules",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -107,3 +109,23 @@ MEDIA_URL = "/media/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Rest Framework
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "ferry.core.api.auth.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Ferry API",
+    "DESCRIPTION": "An overengineered management system for non-ferry vehicles.",
+    "VERSION": "2.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}

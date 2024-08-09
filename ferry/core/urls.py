@@ -18,17 +18,26 @@ Including another URLconf
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.urls import path
+from django.urls import include, path
 from django.views.generic import TemplateView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from ferry.api_legacy.api import urls as api_urls
+from ferry.api_legacy.api import urls as legacy_api_urls
+from ferry.core.api.router import urls as api_urls
+
+urlpatterns = []
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="home.html")),
     path("admin/", admin.site.urls),
     path("api/", TemplateView.as_view(template_name="api_index.html")),
+    # API v1
     path("api/docs/", TemplateView.as_view(template_name="api_index.html")),
-    path("api/v1/", api_urls),
+    path("api/v1/", legacy_api_urls),
+    # API v2
+    path("api/v2/schema/", SpectacularAPIView.as_view(), name="api-v2-schema"),
+    path("api/v2/docs/", SpectacularSwaggerView.as_view(url_name="api-v2-schema"), name="api-v2-docs"),
+    path("api/v2/", include((api_urls, "api-2.0.0"), namespace="api")),
 ]
 
 if settings.DEBUG:
