@@ -8,26 +8,27 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-django = "^4.2"
+django = "~5.1"
 django-ninja = "^1.1.0"
 django-ninja-extra = "^0.20.4"
-django-stubs-ext = "^4.2.7"
+django-stubs-ext = "^5"
 requests = "^2.31.0"
 rules = "^3.3"
+djangorestframework = "^3.15.2"
 
 [tool.poetry.group.prod.dependencies]
 gunicorn = "^21.2.0"
 psycopg = "^3.1.18"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.5.1"
+ruff = "^0.5.7"
 pytest = "^8.0.0"
 pytest-cov = "^4.1.0"
 pytest-django = "^4.8.0"
 djhtml = "^3.0.6"
 mypy = "^1.7.0"
 django-coverage-plugin = "^3.1.0"
-django-stubs = {version = "^4.2.7", extras = ["compatible-mypy"]}
+django-stubs = {version = "^5", extras = ["compatible-mypy"]}
 factory-boy = "^3.3.0"
 types-requests = "^2.31.0.20240125"
 time-machine = "^2.13.0"

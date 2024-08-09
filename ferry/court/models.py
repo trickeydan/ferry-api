@@ -17,12 +17,12 @@ from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 SCORE_FIELD: models.DecimalField = models.DecimalField(max_digits=3, decimal_places=2)
 
 
-class PersonQuerySet(models.QuerySet):
+class PersonQuerySet(models.QuerySet["Person"]):
     def for_user(self, user: User) -> PersonQuerySet:
         # All users can read all people
         return self
 
-    def with_num_ratified_accusations(self) -> models.QuerySet[Person]:
+    def with_num_ratified_accusations(self) -> PersonQuerySet:
         ratifications = (
             Ratification.objects.filter(accusation__suspect_id=models.OuterRef("id"))
             .order_by()
@@ -33,7 +33,7 @@ class PersonQuerySet(models.QuerySet):
             num_ratified_accusations=models.Subquery(ratifications, output_field=models.PositiveIntegerField())
         )
 
-    def with_current_score(self) -> models.QuerySet[Person]:
+    def with_current_score(self) -> PersonQuerySet:
         ratifications = (
             Ratification.objects.filter(accusation__suspect_id=models.OuterRef("id"))
             .order_by()
@@ -49,6 +49,9 @@ class PersonQuerySet(models.QuerySet):
         )
 
 
+PersonManager = models.Manager.from_queryset(PersonQuerySet)
+
+
 class Person(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     display_name = models.CharField(max_length=255, unique=True)
@@ -56,7 +59,7 @@ class Person(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    objects = PersonQuerySet.as_manager()
+    objects = PersonManager()
 
     class Meta:
         verbose_name_plural = "people"
@@ -87,6 +90,9 @@ class ConsequenceQuerySet(models.QuerySet):
         return self.none()
 
 
+ConsequenceManager = models.Manager.from_queryset(ConsequenceQuerySet)
+
+
 class Consequence(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     content = models.CharField(max_length=255)
@@ -95,7 +101,7 @@ class Consequence(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    objects = ConsequenceQuerySet.as_manager()
+    objects = ConsequenceManager()
 
     class Meta:
         ordering = ["content"]
@@ -110,6 +116,9 @@ class AccusationQuerySet(models.QuerySet):
         return self
 
 
+AccusationManager = models.Manager.from_queryset(AccusationQuerySet)
+
+
 class Accusation(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     quote = models.TextField(
@@ -120,7 +129,7 @@ class Accusation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    objects = AccusationQuerySet.as_manager()
+    objects = AccusationManager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -166,6 +175,9 @@ class RatificationQuerySet(models.QuerySet):
         )
 
 
+RatificationManager = models.Manager.from_queryset(RatificationQuerySet)
+
+
 class Ratification(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     accusation = models.OneToOneField(Accusation, on_delete=models.CASCADE, related_name="ratification")
@@ -174,7 +186,7 @@ class Ratification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    objects = RatificationQuerySet.as_manager()
+    objects = RatificationManager()
 
     def __str__(self) -> str:
         return f"ratified by {self.created_by} at {self.created_at}"
