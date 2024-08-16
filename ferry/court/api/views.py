@@ -4,12 +4,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import exceptions, filters, permissions, serializers, viewsets
 from rest_framework.request import Request
 
-from ferry.court.models import Person, PersonQuerySet
+from ferry.court.models import Consequence, ConsequenceQuerySet, Person, PersonQuerySet
 
-from .serializers import PersonSerializer
+from .serializers import ConsequenceReadSerializer, ConsequenceSerializer, PersonSerializer
 
 
-class RulesObjectPermission(permissions.BasePermission):
+class PeopleObjectPermission(permissions.BasePermission):
     def has_permission(self, request: Request, view: Any) -> bool:
         if request.method in permissions.SAFE_METHODS:
             return True
@@ -35,14 +35,12 @@ class RulesObjectPermission(permissions.BasePermission):
         return False
 
 
-class PersonViewset(
-    viewsets.ModelViewSet,
-):
+class PersonViewset(viewsets.ModelViewSet):
     serializer_class = PersonSerializer
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
-    permission_classes = [permissions.IsAuthenticated, RulesObjectPermission]
+    permission_classes = [permissions.IsAuthenticated, PeopleObjectPermission]
     ordering_fields = ("display_name", "current_score", "created_at", "updated_at")
-    filterset_fields = ["discord_id"]
+    filterset_fields = ("discord_id",)
 
     def get_queryset(self) -> PersonQuerySet:
         assert self.request.user.is_authenticated
@@ -58,3 +56,45 @@ class PersonViewset(
         ):
             raise exceptions.PermissionDenied("You don't have permission to update a Discord ID directly.")
         return super().perform_update(serializer)
+
+
+class ConsequenceObjectPermission(permissions.BasePermission):
+    def has_permission(self, request: Request, view: Any) -> bool:
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if request.method in ["PUT", "PATCH", "DELETE"]:
+            return True
+
+        if request.method == "POST":
+            return request.user.has_perm("court.create_consequence")
+
+        return False
+
+    def has_object_permission(self, request: Request, view: Any, obj: Any) -> bool:
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if request.method in ["PUT", "PATCH"]:
+            return request.user.has_perm("court.edit_consequence", obj)
+
+        if request.method == "DELETE":
+            return request.user.has_perm("court.delete_consequence", obj)
+
+        return False
+
+
+class ConsequenceViewset(viewsets.ModelViewSet):
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    permission_classes = [permissions.IsAuthenticated, ConsequenceObjectPermission]
+    ordering_fields = ("created_at", "updated_at")
+    filterset_fields = ("is_enabled", "created_by")
+
+    def get_serializer_class(self) -> type[ConsequenceSerializer] | type[ConsequenceReadSerializer]:
+        if self.action == "create":
+            return ConsequenceSerializer
+        return ConsequenceReadSerializer
+
+    def get_queryset(self) -> ConsequenceQuerySet:
+        assert self.request.user.is_authenticated
+        return Consequence.objects.for_user(self.request.user)
