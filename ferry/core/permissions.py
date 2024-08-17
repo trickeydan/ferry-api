@@ -4,15 +4,7 @@ from __future__ import annotations
 import rules
 
 from ferry.accounts.models import User
-from ferry.court.models import Accusation, Consequence, Person
-
-
-@rules.predicate  # type: ignore[misc]
-def user_created_accusation(user: User, accusation: Accusation) -> bool:
-    try:
-        return user.person == accusation.created_by
-    except Person.DoesNotExist:
-        return False
+from ferry.court.models import Consequence, Person
 
 
 @rules.predicate  # type: ignore[misc]
@@ -40,7 +32,7 @@ rules.add_perm("court.act_for_person", user_is_person | rules.is_superuser)
 
 rules.add_perm("court.view_accusation", rules.always_allow)
 rules.add_perm("court.create_accusation", rules.always_allow)
-rules.add_perm("court.edit_accusation", user_created_accusation | rules.is_superuser)
+rules.add_perm("court.edit_accusation", rules.is_superuser)
 rules.add_perm("court.delete_accusation", rules.is_superuser)
 
 # Consequences

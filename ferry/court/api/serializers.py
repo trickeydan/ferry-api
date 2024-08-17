@@ -1,8 +1,10 @@
+from typing import Any
+
 from django.conf import settings
 from rest_framework import exceptions, serializers
 
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
-from ferry.court.models import Consequence, Person
+from ferry.court.models import Accusation, Consequence, Person, Ratification
 
 
 class PersonLinkSerializer(serializers.ModelSerializer[Person]):
@@ -42,7 +44,9 @@ class CurrentPersonDefault:
 
 
 class ConsequenceSerializer(serializers.ModelSerializer[Consequence]):
-    created_by = serializers.PrimaryKeyRelatedField(queryset=Person.objects.all(), default=CurrentPersonDefault())
+    created_by: serializers.Field = serializers.PrimaryKeyRelatedField(
+        queryset=Person.objects.all(), default=CurrentPersonDefault()
+    )
 
     class Meta:
         model = Consequence
@@ -53,9 +57,60 @@ class ConsequenceSerializer(serializers.ModelSerializer[Consequence]):
             raise exceptions.PermissionDenied("You cannot act on behalf of other people.")
 
         if not value:
-            raise exceptions.ValidationError("You must specify a person if no person is asssociated with your user.")
+            raise exceptions.ValidationError("You must specify a person if no person is associated with your user.")
         return value
 
 
 class ConsequenceReadSerializer(ConsequenceSerializer):
-    created_by = PersonLinkSerializer(read_only=True)  # type: ignore[assignment]
+    created_by = PersonLinkSerializer(read_only=True)
+
+
+class ConsequenceLinkSerializer(serializers.ModelSerializer[Consequence]):
+    class Meta:
+        model = Consequence
+        fields = ("id", "content")
+
+
+class RatificationSerializer(serializers.ModelSerializer[Ratification]):
+    consequence = ConsequenceLinkSerializer(read_only=True)
+    created_by = PersonLinkSerializer(read_only=True)
+
+    class Meta:
+        model = Ratification
+        fields = ("id", "consequence", "created_by", "created_at", "updated_at")
+
+
+class AccusationSerializer(serializers.ModelSerializer[Accusation]):
+    created_by: serializers.Field = serializers.PrimaryKeyRelatedField(
+        queryset=Person.objects.all(), default=CurrentPersonDefault()
+    )
+    suspect: serializers.Field = serializers.PrimaryKeyRelatedField(queryset=Person.objects.all())
+
+    class Meta:
+        model = Accusation
+        fields: tuple[str, ...] = ("id", "quote", "suspect", "created_by", "created_at", "updated_at")
+
+    def validate_created_by(self, value: Person | None) -> Person:
+        if not self.context["request"].user.has_perm("court.act_for_person", value):
+            raise exceptions.PermissionDenied("You cannot act on behalf of other people.")
+
+        if not value:
+            raise exceptions.ValidationError("You must specify a person if no person is associated with your user.")
+        return value
+
+    def validate(self, data: dict[str, Any]) -> Any:
+        try:
+            if data["suspect"] == data["created_by"]:
+                raise exceptions.ValidationError("Unable to create accusation that suspects the creator.")
+        except KeyError:
+            pass
+        return super().validate(data)
+
+
+class AccusationReadSerializer(AccusationSerializer):
+    suspect = PersonLinkSerializer(read_only=True)
+    ratification = RatificationSerializer(read_only=True)
+    created_by = PersonLinkSerializer(read_only=True)
+
+    class Meta(AccusationSerializer.Meta):
+        fields = AccusationSerializer.Meta.fields + ("ratification",)

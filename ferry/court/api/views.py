@@ -4,9 +4,15 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import exceptions, filters, permissions, serializers, viewsets
 from rest_framework.request import Request
 
-from ferry.court.models import Consequence, ConsequenceQuerySet, Person, PersonQuerySet
+from ferry.court.models import Accusation, AccusationQuerySet, Consequence, ConsequenceQuerySet, Person, PersonQuerySet
 
-from .serializers import ConsequenceReadSerializer, ConsequenceSerializer, PersonSerializer
+from .serializers import (
+    AccusationReadSerializer,
+    AccusationSerializer,
+    ConsequenceReadSerializer,
+    ConsequenceSerializer,
+    PersonSerializer,
+)
 
 
 class PeopleObjectPermission(permissions.BasePermission):
@@ -98,3 +104,45 @@ class ConsequenceViewset(viewsets.ModelViewSet):
     def get_queryset(self) -> ConsequenceQuerySet:
         assert self.request.user.is_authenticated
         return Consequence.objects.for_user(self.request.user)
+
+
+class AccusationObjectPermission(permissions.BasePermission):
+    def has_permission(self, request: Request, view: Any) -> bool:
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if request.method in ["PUT", "PATCH", "DELETE"]:
+            return True
+
+        if request.method == "POST":
+            return request.user.has_perm("court.create_accusation")
+
+        return False
+
+    def has_object_permission(self, request: Request, view: Any, obj: Any) -> bool:
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if request.method in ["PUT", "PATCH"]:
+            return request.user.has_perm("court.edit_accusation", obj)
+
+        if request.method == "DELETE":
+            return request.user.has_perm("court.delete_accusation", obj)
+
+        return False
+
+
+class AccusationViewset(viewsets.ModelViewSet):
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    permission_classes = [permissions.IsAuthenticated, AccusationObjectPermission]
+    ordering_fields = ("created_at", "updated_at")
+    filterset_fields = ("suspect", "created_by")
+
+    def get_serializer_class(self) -> type[AccusationSerializer] | type[AccusationReadSerializer]:
+        if self.action == "create":
+            return AccusationSerializer
+        return AccusationReadSerializer
+
+    def get_queryset(self) -> AccusationQuerySet:
+        assert self.request.user.is_authenticated
+        return Accusation.objects.for_user(self.request.user)

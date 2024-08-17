@@ -80,7 +80,7 @@ class TestConsequenceCreateEndpoint(APITest):
                 {},
                 {
                     "content": ["This field is required."],
-                    "created_by": ["You must specify a person if no person is asssociated with your user."],
+                    "created_by": ["You must specify a person if no person is associated with your user."],
                 },
                 id="empty-dict",
             ),
@@ -88,7 +88,7 @@ class TestConsequenceCreateEndpoint(APITest):
                 {"bees": 4},
                 {
                     "content": ["This field is required."],
-                    "created_by": ["You must specify a person if no person is asssociated with your user."],
+                    "created_by": ["You must specify a person if no person is associated with your user."],
                 },
                 id="spurious",
             ),
@@ -102,7 +102,7 @@ class TestConsequenceCreateEndpoint(APITest):
             ),
             pytest.param(
                 {"content": "bees", "is_enabled": True},
-                {"created_by": ["You must specify a person if no person is asssociated with your user."]},
+                {"created_by": ["You must specify a person if no person is associated with your user."]},
                 id="missing_created_by",
             ),
             pytest.param(
@@ -229,7 +229,7 @@ class TestConsequenceCreateEndpoint(APITest):
 
         assert resp.status_code == HTTPStatus.BAD_REQUEST
         data = resp.json()
-        assert data == {"created_by": ["You must specify a person if no person is asssociated with your user."]}
+        assert data == {"created_by": ["You must specify a person if no person is associated with your user."]}
 
     @pytest.mark.parametrize(
         ("payload", "expected_content", "expected_is_enabled"),
