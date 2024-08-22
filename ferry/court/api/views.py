@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Any
 
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import exceptions, filters, permissions, serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -54,6 +55,14 @@ class PeopleObjectPermission(permissions.BasePermission):
         return False
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["People"]),
+    retrieve=extend_schema(tags=["People"]),
+    update=extend_schema(tags=["People"]),
+    partial_update=extend_schema(tags=["People"]),
+    create=extend_schema(tags=["People"]),
+    destroy=extend_schema(tags=["People"]),
+)
 class PersonViewset(viewsets.ModelViewSet):
     serializer_class = PersonSerializer
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
@@ -103,6 +112,14 @@ class ConsequenceObjectPermission(permissions.BasePermission):
         return False
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["Ferry - Consequences"]),
+    retrieve=extend_schema(tags=["Ferry - Consequences"]),
+    update=extend_schema(tags=["Ferry - Consequences"]),
+    partial_update=extend_schema(tags=["Ferry - Consequences"]),
+    create=extend_schema(tags=["Ferry - Consequences"]),
+    destroy=extend_schema(tags=["Ferry - Consequences"]),
+)
 class ConsequenceViewset(viewsets.ModelViewSet):
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     permission_classes = [permissions.IsAuthenticated, ConsequenceObjectPermission]
@@ -174,6 +191,14 @@ class RatificationObjectPermission(permissions.BasePermission):
         return False
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["Ferry - Accusations"]),
+    retrieve=extend_schema(tags=["Ferry - Accusations"]),
+    update=extend_schema(tags=["Ferry - Accusations"]),
+    partial_update=extend_schema(tags=["Ferry - Accusations"]),
+    create=extend_schema(tags=["Ferry - Accusations"]),
+    destroy=extend_schema(tags=["Ferry - Accusations"]),
+)
 class AccusationViewset(viewsets.ModelViewSet):
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     permission_classes = [permissions.IsAuthenticated, AccusationObjectPermission]
@@ -189,6 +214,7 @@ class AccusationViewset(viewsets.ModelViewSet):
         assert self.request.user.is_authenticated
         return Accusation.objects.for_user(self.request.user)
 
+    @extend_schema(tags=["Ferry - Ratifications"])
     @action(
         detail=True, methods=["GET"], permission_classes=[permissions.IsAuthenticated, RatificationObjectPermission]
     )
@@ -200,6 +226,7 @@ class AccusationViewset(viewsets.ModelViewSet):
         except Ratification.DoesNotExist:
             return Response({"detail": "Accusation is not ratified."}, status=HTTPStatus.NOT_FOUND)
 
+    @extend_schema(tags=["Ferry - Ratifications"])
     @ratification.mapping.post
     def ratification_create(self, request: Request, pk: None = None) -> Response:
         accusation = self.get_object()
@@ -218,6 +245,7 @@ class AccusationViewset(viewsets.ModelViewSet):
 
         return Response(response_serializer.data, status=HTTPStatus.CREATED)
 
+    @extend_schema(tags=["Ferry - Ratifications"])
     @ratification.mapping.delete
     def ratification_delete(self, request: Request, pk: None = None) -> Response:
         accusation = self.get_object()
