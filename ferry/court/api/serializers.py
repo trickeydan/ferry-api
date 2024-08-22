@@ -1,3 +1,4 @@
+import random
 from typing import Any
 
 from django.conf import settings
@@ -40,7 +41,7 @@ class CurrentPersonDefault:
     requires_context = True
 
     def __call__(self, serializer_field: serializers.Field) -> Person:
-        return serializer_field.context["request"].user.person  # TODO
+        return serializer_field.context["request"].user.person
 
 
 class ConsequenceSerializer(serializers.ModelSerializer[Consequence]):
@@ -80,6 +81,41 @@ class RatificationSerializer(serializers.ModelSerializer[Ratification]):
         fields = ("id", "consequence", "created_by", "created_at", "updated_at")
 
 
+class RatificationCreateSerializer(serializers.ModelSerializer[Ratification]):
+    created_by: serializers.Field = serializers.PrimaryKeyRelatedField(
+        queryset=Person.objects.all(), default=CurrentPersonDefault()
+    )
+
+    class Meta:
+        model = Ratification
+        fields = ("created_by",)
+
+    def validate_created_by(self, value: Person | None) -> Person:
+        if not self.context["request"].user.has_perm("court.act_for_person", value):
+            raise exceptions.PermissionDenied("You cannot act on behalf of other people.")
+
+        if not value:
+            raise exceptions.ValidationError("You must specify a person if no person is associated with your user.")
+
+        accusation = self.context["accusation"]
+        if value == accusation.created_by:
+            raise exceptions.ValidationError("You cannot ratify an accusation that you made.")
+
+        if value == accusation.suspect:
+            raise exceptions.ValidationError("You cannot ratify an accusation made against you.")
+
+        return value
+
+    def create(self, validated_data: dict[str, Any]) -> Ratification:
+        try:
+            validated_data["consequence"] = random.choice(Consequence.objects.filter(is_enabled=True).all())  # noqa: S311
+        except IndexError:
+            raise exceptions.NotAcceptable("No consequences available to assign") from None
+
+        validated_data["accusation"] = self.context["accusation"]
+        return super().create(validated_data)
+
+
 class AccusationSerializer(serializers.ModelSerializer[Accusation]):
     created_by: serializers.Field = serializers.PrimaryKeyRelatedField(
         queryset=Person.objects.all(), default=CurrentPersonDefault()
@@ -96,6 +132,7 @@ class AccusationSerializer(serializers.ModelSerializer[Accusation]):
 
         if not value:
             raise exceptions.ValidationError("You must specify a person if no person is associated with your user.")
+
         return value
 
     def validate(self, data: dict[str, Any]) -> Any:
