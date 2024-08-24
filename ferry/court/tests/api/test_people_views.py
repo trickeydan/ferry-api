@@ -7,7 +7,7 @@ from django.test import Client
 from django.urls import reverse_lazy
 
 from ferry.accounts.models import User
-from ferry.api_legacy.tests.utils import APITest
+from ferry.conftest import APITest
 from ferry.core.discord import NoSuchGuildMemberError
 from ferry.court.factories import AccusationFactory, PersonFactory
 from ferry.court.models import Person

@@ -7,7 +7,7 @@ import pytest
 from django.test import Client
 from django.urls import reverse_lazy
 
-from ferry.api_legacy.tests.utils import APITest
+from ferry.conftest import APITest
 
 if TYPE_CHECKING:
     from ferry.accounts.models import User

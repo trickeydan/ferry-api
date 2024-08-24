@@ -7,7 +7,7 @@ from django.test import Client
 from django.urls import reverse_lazy
 
 from ferry.accounts.models import User
-from ferry.api_legacy.tests.utils import APITest
+from ferry.conftest import APITest
 from ferry.court.factories import AccusationFactory, PersonFactory
 from ferry.court.models import Accusation, Person, Ratification
 
@@ -215,9 +215,9 @@ class TestAccusationCreateEndpoint(APITest):
         assert resp.status_code == HTTPStatus.CREATED
         data = resp.json()
         assert data["quote"] == "bees"
-        assert data["created_by"] == str(created_by.id)
-        assert data["suspect"] == str(suspect.id)
-        assert "ratification" not in data
+        assert data["created_by"] == {"id": str(created_by.id), "display_name": created_by.display_name}
+        assert data["suspect"] == {"id": str(suspect.id), "display_name": suspect.display_name}
+        assert data["ratification"] is None
 
         accusation = Accusation.objects.get(id=data["id"])
         assert accusation.quote == "bees"

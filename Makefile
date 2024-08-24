@@ -1,4 +1,4 @@
-.PHONY: all clean lint type test test-cov
+.PHONY: all clean fix lint type test test-cov
 
 CMD:=poetry run
 PYMODULE:=ferry
@@ -6,6 +6,7 @@ MANAGEPY:=$(CMD) ./manage.py
 SETTINGS_MODULE:=ferry.core.settings.test
 
 all: type test format lint
+fix: lint-fix format
 
 lint: 
 	$(CMD) ruff check $(PYMODULE)

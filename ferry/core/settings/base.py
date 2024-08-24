@@ -16,7 +16,6 @@ ALLOWED_HOSTS: list[str] = []
 
 INSTALLED_APPS = [
     "ferry.accounts",
-    "ferry.api_legacy",
     "ferry.court",
     "drf_spectacular",
     "rest_framework",

@@ -19,7 +19,7 @@ from ferry.court.models import (
 )
 
 from .serializers import (
-    AccusationReadSerializer,
+    AccusationCreateSerializer,
     AccusationSerializer,
     ConsequenceReadSerializer,
     ConsequenceSerializer,
@@ -204,15 +204,18 @@ class AccusationViewset(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, AccusationObjectPermission]
     ordering_fields = ("created_at", "updated_at")
     filterset_fields = ("suspect", "created_by")
-
-    def get_serializer_class(self) -> type[AccusationSerializer] | type[AccusationReadSerializer]:
-        if self.action == "create":
-            return AccusationSerializer
-        return AccusationReadSerializer
+    serializer_class = AccusationSerializer
 
     def get_queryset(self) -> AccusationQuerySet:
         assert self.request.user.is_authenticated
         return Accusation.objects.for_user(self.request.user)
+
+    def create(self, request: Request) -> Response:
+        serializer = AccusationCreateSerializer(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        accusation = serializer.save()
+        response_serializer = AccusationSerializer(accusation)
+        return Response(response_serializer.data, status=HTTPStatus.CREATED)
 
     @extend_schema(tags=["Ferry - Ratifications"])
     @action(

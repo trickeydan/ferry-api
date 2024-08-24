@@ -116,7 +116,7 @@ class RatificationCreateSerializer(serializers.ModelSerializer[Ratification]):
         return super().create(validated_data)
 
 
-class AccusationSerializer(serializers.ModelSerializer[Accusation]):
+class AccusationCreateSerializer(serializers.ModelSerializer[Accusation]):
     created_by: serializers.Field = serializers.PrimaryKeyRelatedField(
         queryset=Person.objects.all(), default=CurrentPersonDefault()
     )
@@ -144,10 +144,10 @@ class AccusationSerializer(serializers.ModelSerializer[Accusation]):
         return super().validate(data)
 
 
-class AccusationReadSerializer(AccusationSerializer):
+class AccusationSerializer(AccusationCreateSerializer):
     suspect = PersonLinkSerializer(read_only=True)
     ratification = RatificationSerializer(read_only=True)
     created_by = PersonLinkSerializer(read_only=True)
 
-    class Meta(AccusationSerializer.Meta):
-        fields = AccusationSerializer.Meta.fields + ("ratification",)
+    class Meta(AccusationCreateSerializer.Meta):
+        fields = AccusationCreateSerializer.Meta.fields + ("ratification",)
