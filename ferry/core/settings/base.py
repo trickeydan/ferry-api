@@ -135,3 +135,13 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "2.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+
+# SSO configuration
+
+SSO_OIDC_CONFIGURATION_URL = ""
+SSO_OIDC_CLIENT_ID = ""
+SSO_OIDC_CLIENT_SECRET = ""
+SSO_OIDC_SCOPES = "openid email profile"
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "https://sown.org.uk/"

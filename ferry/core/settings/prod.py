@@ -27,3 +27,11 @@ STATIC_ROOT = "/app/static/"
 
 DISCORD_GUILD = os.environ["DISCORD_GUILD"]
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
+
+
+# SSO configuration
+
+SSO_OIDC_CONFIGURATION_URL = os.environ["SSO_OIDC_CONFIGURATION_URL"]
+SSO_OIDC_CLIENT_ID = os.environ["SSO_OIDC_CLIENT_ID"]
+SSO_OIDC_CLIENT_SECRET = os.environ["SSO_OIDC_CLIENT_SECRET"]
+SSO_OIDC_SCOPES = "openid email profile"
