@@ -1,8 +1,11 @@
+{% extends "base.html" %}
 {% load static %}
 
-<p>Hello {{ request.user }}</p>
-<form method="post" action="{% url 'accounts:logout' %}">
-  {% csrf_token %}
-  <button type="submit">Logout</button>
-</form>
-<img width="100%" height="100%" src="{% static 'choo.gif' %}">
+{% block title %}Ferry System{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <p>Hello {{ request.user }}</p>
+    <img class="img-fluid" src="{% static 'choo.gif' %}">
+  </div>
+{% endblock %}

@@ -28,7 +28,7 @@ from ferry.core.api.router import urls as api_urls
 urlpatterns = []
 
 urlpatterns = [
-    path("", login_required(TemplateView.as_view(template_name="home.html"))),
+    path("", login_required(TemplateView.as_view(template_name="home.html")), name="home"),
     path("accounts/", include("ferry.accounts.urls")),
     path("admin/", admin.site.urls),
     path("api/", TemplateView.as_view(template_name="api_index.html")),
