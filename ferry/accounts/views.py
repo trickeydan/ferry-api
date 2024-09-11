@@ -4,11 +4,14 @@ from typing import Any
 
 from django import http
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, mixins
 from django.contrib.auth import views as auth_views
+from django.db.models.base import Model as Model
 from django.shortcuts import redirect
-from django.urls import reverse
-from django.views import View
+from django.urls import reverse, reverse_lazy
+from django.views.generic import FormView, View
+
+from ferry.accounts.forms import UserPersonLinkForm
 
 from .models import User
 from .oauth import oauth_config
@@ -76,3 +79,27 @@ class SSOOIDCRedirectView(View):
         user.save()
 
         return user
+
+
+class UnlinkedAccountView(mixins.LoginRequiredMixin, FormView):
+    template_name = "accounts/unlinked.html"
+    form_class = UserPersonLinkForm
+    success_url = reverse_lazy("home")
+
+    def dispatch(self, request: http.HttpRequest, *args: Any, **kwargs: Any) -> http.HttpResponseBase:
+        assert request.user.is_authenticated
+
+        if request.user.person is not None:
+            return redirect("home")
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form: UserPersonLinkForm) -> http.HttpResponse:
+        form.save()
+        messages.info(self.request, "Your Discord account has been successfully linked.")
+        return super().form_valid(form)

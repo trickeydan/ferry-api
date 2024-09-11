@@ -4,8 +4,6 @@
 {% block title %}Ferry System{% endblock %}
 
 {% block content %}
-  <div class="container-fluid">
-    <p>Hello {{ request.user }}</p>
-    <img class="img-fluid" src="{% static 'choo.gif' %}">
-  </div>
+  <p>Hello {{ request.user.display_name }}</p>
+  <img class="img-fluid" src="{% static 'choo.gif' %}">
 {% endblock %}

@@ -32,6 +32,10 @@ class PersonSerializer(serializers.ModelSerializer[Person]):
         return value
 
 
+class DiscordLinkTokenSerializer(serializers.Serializer):
+    link_token = serializers.CharField(required=False)
+
+
 class CurrentPersonDefault:
     """
     May be applied as a `default=...` value on a serializer field.

@@ -13,4 +13,5 @@ urlpatterns = [
         views.SSOOIDCRedirectView.as_view(),
         name="sso_oidc_redirect",
     ),
+    path("unlinked/", views.UnlinkedAccountView.as_view(), name="unlinked_account"),
 ]

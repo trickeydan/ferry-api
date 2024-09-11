@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags static %}
+
+{% block title %}Link Discord Account{% endblock %}
+{% block page_title %}Welcome{% endblock %}
+
+{% block content %}
+  <p>Welcome to the ferry system. Unfortunately, we have no record to link your SOWN SSO account to your ferry profile.</p>
+  <p>If you use Discord, you can automatically link your account using this page. If you don't use Discord, please contact an administrator.</p>
+
+  <h2>Link Discord Account</h2>
+  <p>
+    You can automatically link your discord account to this account by obtaining a Ferry Authorisation Code Token (<em>FACT</em>).<br/>
+    To obtain a Ferry Authorisation Code Token, use the <code>/ferry fact</code> command in Discord.
+  </p>
+  {% crispy form %}
+{% endblock %}

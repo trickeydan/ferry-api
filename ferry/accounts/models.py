@@ -8,6 +8,13 @@ from django.db import models
 class User(AbstractUser):
     person = models.OneToOneField("court.Person", blank=True, null=True, on_delete=models.PROTECT)
 
+    @property
+    def display_name(self) -> str:
+        if self.person:
+            return self.person.display_name
+        else:
+            return self.get_full_name()
+
 
 class APIToken(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)

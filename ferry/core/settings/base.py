@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import django_stubs_ext
+from django.contrib import messages
 
 django_stubs_ext.monkeypatch()
 
@@ -19,6 +20,8 @@ INSTALLED_APPS = [
     "ferry.court",
     "drf_spectacular",
     "rest_framework",
+    "crispy_forms",
+    "crispy_bootstrap5",
     "django_filters",
     "rules",
     "django.contrib.admin",
@@ -37,6 +40,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "ferry.accounts.middleware.UserLinkedToPersonMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -109,6 +113,21 @@ MEDIA_URL = "/media/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Message Tags
+
+MESSAGE_TAGS = {
+    messages.DEBUG: "alert-info",
+    messages.INFO: "alert-info",
+    messages.SUCCESS: "alert-success",
+    messages.WARNING: "alert-warning",
+    messages.ERROR: "alert-danger",
+}
+
+# Crispy Forms
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # Rest Framework
 
