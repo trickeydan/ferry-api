@@ -16,6 +16,11 @@ def user_with_person(person: Person) -> User:
 
 
 @pytest.fixture
+def user() -> User:
+    return User.objects.create(username="user")
+
+
+@pytest.fixture
 def admin_user() -> User:
     return User.objects.create(username="admin", is_superuser=True)
 

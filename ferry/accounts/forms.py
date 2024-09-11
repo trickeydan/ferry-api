@@ -7,7 +7,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+from django.core.signing import BadSignature, TimestampSigner
 
 from ferry.accounts.models import User
 from ferry.court.models import Person
@@ -41,8 +41,6 @@ class UserPersonLinkForm(forms.Form):
             person_id = signer.unsign(signed_data, max_age=timedelta(seconds=1))
         except BadSignature:
             raise ValidationError("The FACT is invalid.") from None
-        except SignatureExpired:
-            raise ValidationError("The FACT has expired.") from None
 
         try:
             return Person.objects.filter(user__isnull=True).get(pk=person_id)

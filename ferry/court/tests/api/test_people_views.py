@@ -1,8 +1,10 @@
+import base64
 from http import HTTPStatus
 from unittest.mock import Mock, patch
 from uuid import UUID
 
 import pytest
+from django.core.signing import TimestampSigner
 from django.test import Client
 from django.urls import reverse_lazy
 
@@ -536,3 +538,61 @@ class TestPeopleDeleteEndpoint(APITest):
         assert data == {"detail": "You do not have permission to perform this action."}
 
         assert Person.objects.filter(id=person_id).exists()
+
+
+@pytest.mark.django_db
+class TestPeopleTokenEndpoint(APITest):
+    def _get_url(self, person_id: UUID) -> str:
+        return reverse_lazy("api-2.0.0:people-fact", args=[person_id])
+
+    def test_get_unauthenticated(self, client: Client) -> None:
+        resp = client.get(self._get_url(UUID(int=0)))
+        assert resp.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_get_404(self, client: Client, admin_user: User) -> None:
+        resp = client.get(self._get_url(UUID(int=0)), headers=self.get_headers(admin_user))
+        assert resp.status_code == HTTPStatus.NOT_FOUND
+
+    def test_get_unauthorised(self, client: Client, user: User) -> None:
+        person = PersonFactory()
+
+        # Act
+        resp = client.get(self._get_url(person.id), headers=self.get_headers(user))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.FORBIDDEN
+        data = resp.json()
+        assert data == {"detail": "You don't have permission to get a FACT for that person."}
+
+    def test_get(self, client: Client, user_with_person: User) -> None:
+        resp = client.get(self._get_url(user_with_person.person.id), headers=self.get_headers(user_with_person))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data == {'link_token': None}
+
+    def test_get_admin(self, client: Client, admin_user: User) -> None:
+        # Arrange
+        person = PersonFactory()
+
+        # Act
+        resp = client.get(self._get_url(person.id), headers=self.get_headers(admin_user))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data.keys() == {'link_token'}
+
+        link_token = data['link_token']
+        signer = TimestampSigner()
+        assert signer.unsign(base64.b64decode(link_token).decode()) == str(person.id)
+
+    def test_get_admin_already_linked(self, client: Client, admin_user: User, user_with_person: User) -> None:
+        # Act
+        resp = client.get(self._get_url(user_with_person.person.id), headers=self.get_headers(admin_user))
+
+        # Assert
+        assert resp.status_code == HTTPStatus.OK
+        data = resp.json()
+        assert data == {'link_token': None}
