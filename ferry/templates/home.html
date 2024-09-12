@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block title %}Ferry System{% endblock %}
-
-{% block content %}
-  <p>Hello {{ request.user.display_name }}</p>
-  <img class="img-fluid" src="{% static 'choo.gif' %}">
-{% endblock %}

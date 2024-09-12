@@ -565,12 +565,13 @@ class TestPeopleTokenEndpoint(APITest):
         assert data == {"detail": "You don't have permission to get a FACT for that person."}
 
     def test_get(self, client: Client, user_with_person: User) -> None:
+        assert user_with_person.person
         resp = client.get(self._get_url(user_with_person.person.id), headers=self.get_headers(user_with_person))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
-        assert data == {'link_token': None}
+        assert data == {"link_token": None}
 
     def test_get_admin(self, client: Client, admin_user: User) -> None:
         # Arrange
@@ -582,17 +583,19 @@ class TestPeopleTokenEndpoint(APITest):
         # Assert
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
-        assert data.keys() == {'link_token'}
+        assert data.keys() == {"link_token"}
 
-        link_token = data['link_token']
+        link_token = data["link_token"]
         signer = TimestampSigner()
         assert signer.unsign(base64.b64decode(link_token).decode()) == str(person.id)
 
     def test_get_admin_already_linked(self, client: Client, admin_user: User, user_with_person: User) -> None:
+        assert user_with_person.person
+
         # Act
         resp = client.get(self._get_url(user_with_person.person.id), headers=self.get_headers(admin_user))
 
         # Assert
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
-        assert data == {'link_token': None}
+        assert data == {"link_token": None}

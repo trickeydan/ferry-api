@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Current Scores{% endblock %}
+{% block page_title %}Current Scores{% endblock %}
+
+{% block content %}
+  <p>Hello {{ request.user.display_name }}</p>
+
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Person</th>
+        <th scope="col">Current Score</th>
+        <th scope="col">Times Accused</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for person in object_list %}
+        <tr>
+          <th scope="row">{{ person.rank }}</th>
+          <td>{{ person.display_name }}</td>
+          <td>{{ person.current_score }}</td>
+          <td>{{ person.num_ratified_accusations }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
