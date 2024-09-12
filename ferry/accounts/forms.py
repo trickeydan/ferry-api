@@ -38,7 +38,7 @@ class UserPersonLinkForm(forms.Form):
             raise ValidationError("The FACT is invalid.") from None
 
         try:
-            person_id = signer.unsign(signed_data, max_age=timedelta(seconds=1))
+            person_id = signer.unsign(signed_data, max_age=timedelta(hours=1))
         except BadSignature:
             raise ValidationError("The FACT is invalid.") from None
 
