@@ -15,15 +15,17 @@
         <th scope="col">Person</th>
         <th scope="col">Current Score</th>
         <th scope="col">Times Accused</th>
+        <th scope="col"></th>
       </tr>
     </thead>
     <tbody>
       {% for person in object_list %}
         <tr>
           <th scope="row">{{ person.rank }}</th>
-          <td>{{ person.display_name }}</td>
+          <td><a href="{% url 'court:person_score' person.id %}">{{ person.display_name }}</a></td>
           <td>{{ person.current_score }}</td>
           <td>{{ person.num_ratified_accusations }}</td>
+          <td><a href="{% url 'court:person_score' person.id %}">View</a></td>
         </tr>
       {% endfor %}
     </tbody>
