@@ -4,8 +4,9 @@ from typing import Any
 from django.conf import settings
 from rest_framework import exceptions, serializers
 
+from ferry.accounts.models import Person
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
-from ferry.court.models import Accusation, Consequence, Person, Ratification
+from ferry.court.models import Accusation, Consequence, Ratification
 
 
 class PersonLinkSerializer(serializers.ModelSerializer[Person]):

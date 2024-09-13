@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import rules
 
-from ferry.accounts.models import User
-from ferry.court.models import Consequence, Person
+from ferry.accounts.models import Person, User
+from ferry.court.models import Consequence
 
 
 @rules.predicate  # type: ignore[misc]

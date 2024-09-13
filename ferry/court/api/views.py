@@ -10,14 +10,12 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ferry.accounts.models import User
+from ferry.accounts.models import Person, PersonQuerySet, User
 from ferry.court.models import (
     Accusation,
     AccusationQuerySet,
     Consequence,
     ConsequenceQuerySet,
-    Person,
-    PersonQuerySet,
     Ratification,
 )
 

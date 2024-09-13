@@ -11,10 +11,10 @@ from django.db.models.query import QuerySet
 from django.forms import BaseModelForm
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import FormView, View, UpdateView
+from django.views.generic import FormView, UpdateView, View
 
 from ferry.accounts.forms import PersonProfileForm, UserPersonLinkForm
-from ferry.court.models import Person
+from ferry.accounts.models import Person
 
 from .models import User
 from .oauth import oauth_config
@@ -109,10 +109,9 @@ class UnlinkedAccountView(mixins.LoginRequiredMixin, FormView):
 
 
 class ProfileView(mixins.LoginRequiredMixin, UpdateView):
-
     form_class = PersonProfileForm
     template_name = "accounts/profile.html"
-    success_url = reverse_lazy('accounts:profile')
+    success_url = reverse_lazy("accounts:profile")
 
     def get_object(self, queryset: QuerySet[Any] | None = None) -> Person:
         assert self.request.user.is_authenticated

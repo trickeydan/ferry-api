@@ -1,82 +1,18 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Collection
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Case, F, Func, Value, When
-from django.db.models.functions import Coalesce
+from django.db.models import Case, F, Value, When
 from django.utils import timezone
 
-from ferry.accounts.models import User
-from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
+if TYPE_CHECKING:
+    from ferry.accounts.models import User
 
 SCORE_FIELD: models.DecimalField = models.DecimalField(max_digits=3, decimal_places=2)
-
-
-class PersonQuerySet(models.QuerySet["Person"]):
-    def for_user(self, user: User) -> PersonQuerySet:
-        # All users can read all people
-        return self
-
-    def with_num_ratified_accusations(self) -> PersonQuerySet:
-        ratifications = (
-            Ratification.objects.filter(accusation__suspect_id=models.OuterRef("id"))
-            .order_by()
-            .annotate(count=Func(F("id"), function="Count"))
-            .values("count")
-        )
-        return self.annotate(
-            num_ratified_accusations=models.Subquery(ratifications, output_field=models.PositiveIntegerField())
-        )
-
-    def with_current_score(self) -> PersonQuerySet:
-        ratifications = (
-            Ratification.objects.filter(accusation__suspect_id=models.OuterRef("id"))
-            .order_by()
-            .with_score_value()
-            .annotate(count=Func(F("score_value"), function="Sum"))
-            .values("count")
-        )
-        return self.annotate(
-            current_score=Coalesce(
-                models.Subquery(ratifications, output_field=SCORE_FIELD),
-                Value(0, output_field=SCORE_FIELD),
-            )
-        )
-
-
-PersonManager = models.Manager.from_queryset(PersonQuerySet)
-
-
-class Person(models.Model):
-    id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
-    display_name = models.CharField(max_length=255, unique=True)
-    discord_id = models.BigIntegerField(verbose_name="Discord ID", blank=True, null=True, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
-
-    objects = PersonManager()
-
-    class Meta:
-        verbose_name_plural = "people"
-        ordering = ["display_name"]
-
-    def __str__(self) -> str:
-        return self.display_name
-
-    def clean_fields(self, exclude: Collection[str] | None = None) -> None:
-        super().clean_fields(exclude)
-
-        if self.discord_id:
-            discord_client = get_discord_client()
-            try:
-                discord_client.get_guild_member_by_id(settings.DISCORD_GUILD, self.discord_id)
-            except NoSuchGuildMemberError:
-                raise ValidationError("Unknown discord ID. Is the user part of the guild?") from None
 
 
 class ConsequenceQuerySet(models.QuerySet):
@@ -97,7 +33,7 @@ class Consequence(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     content = models.CharField(max_length=255)
     is_enabled = models.BooleanField(default=True)
-    created_by = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="consequences")
+    created_by = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="consequences")
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -124,8 +60,8 @@ class Accusation(models.Model):
     quote = models.TextField(
         help_text="A quote to use as evidence of the alleged crime", max_length=500, blank=False, null=False
     )
-    suspect = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="accusations_suspected")
-    created_by = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="accusations_created")
+    suspect = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="accusations_suspected")
+    created_by = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="accusations_created")
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -182,7 +118,7 @@ class Ratification(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     accusation = models.OneToOneField(Accusation, on_delete=models.CASCADE, related_name="ratification")
     consequence = models.ForeignKey(Consequence, on_delete=models.PROTECT, related_name="+")
-    created_by = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="ratifications")
+    created_by = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="ratifications")
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 

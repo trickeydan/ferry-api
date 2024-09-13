@@ -5,10 +5,11 @@ import pytest
 from django.test import Client
 from django.urls import reverse_lazy
 
-from ferry.accounts.models import User
+from ferry.accounts.factories import PersonFactory
+from ferry.accounts.models import Person, User
 from ferry.conftest import APITest
-from ferry.court.factories import AccusationFactory, ConsequenceFactory, PersonFactory
-from ferry.court.models import Accusation, Person, Ratification
+from ferry.court.factories import AccusationFactory, ConsequenceFactory
+from ferry.court.models import Accusation, Ratification
 
 
 @pytest.mark.django_db

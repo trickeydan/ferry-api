@@ -5,7 +5,9 @@ from django.db import models
 from django.db.models.functions import DenseRank
 from django.views.generic import DetailView, ListView
 
-from .models import Accusation, Person, PersonQuerySet
+from ferry.accounts.models import Person, PersonQuerySet
+
+from .models import Accusation
 
 
 class ScoreboardView(LoginRequiredMixin, ListView):

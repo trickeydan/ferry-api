@@ -1,8 +1,10 @@
 import pytest
 import time_machine
 
-from ferry.court.factories import AccusationFactory, PersonFactory
-from ferry.court.models import Person, Ratification
+from ferry.accounts.factories import PersonFactory
+from ferry.accounts.models import Person
+from ferry.court.factories import AccusationFactory
+from ferry.court.models import Ratification
 
 
 @pytest.mark.django_db

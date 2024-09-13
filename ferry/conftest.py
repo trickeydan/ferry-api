@@ -1,8 +1,7 @@
 import pytest
 
-from ferry.accounts.models import User
+from ferry.accounts.models import Person, User
 from ferry.court.factories import PersonFactory
-from ferry.court.models import Person
 
 
 @pytest.fixture

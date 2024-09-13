@@ -1,13 +1,8 @@
 import factory
 
-from .models import Accusation, Consequence, Person, Ratification
+from ferry.accounts.factories import PersonFactory
 
-
-class PersonFactory(factory.django.DjangoModelFactory):
-    display_name = factory.Faker("name")
-
-    class Meta:
-        model = Person
+from .models import Accusation, Consequence, Ratification
 
 
 class ConsequenceFactory(factory.django.DjangoModelFactory):

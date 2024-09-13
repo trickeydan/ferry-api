@@ -1,12 +1,6 @@
 from django.contrib import admin
 
-from .models import Accusation, Consequence, Person, Ratification
-
-
-class PersonAdmin(admin.ModelAdmin):
-    readonly_fields = ("id", "created_at", "updated_at")
-    fields = ("id", "display_name", "discord_id", "created_at", "updated_at")
-    list_display = ("display_name", "discord_id")
+from .models import Accusation, Consequence, Ratification
 
 
 class ConsequenceAdmin(admin.ModelAdmin):
@@ -34,6 +28,5 @@ class AccusationAdmin(admin.ModelAdmin):
     list_display = ("created_at", "suspect", "created_by")
 
 
-admin.site.register(Person, PersonAdmin)
 admin.site.register(Consequence, ConsequenceAdmin)
 admin.site.register(Accusation, AccusationAdmin)

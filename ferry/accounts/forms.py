@@ -9,8 +9,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature, TimestampSigner
 
-from ferry.accounts.models import User
-from ferry.court.models import Person
+from ferry.accounts.models import Person, User
 
 
 class UserPersonLinkForm(forms.Form):
@@ -61,10 +60,9 @@ class UserPersonLinkForm(forms.Form):
 
 
 class PersonProfileForm(forms.ModelForm):
-
     class Meta:
         model = Person
-        fields = ('display_name',)
+        fields = ("display_name",)
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

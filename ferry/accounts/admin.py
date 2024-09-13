@@ -3,7 +3,13 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.utils.translation import gettext_lazy as _
 
-from ferry.accounts.models import APIToken, User
+from ferry.accounts.models import APIToken, Person, User
+
+
+class PersonAdmin(admin.ModelAdmin):
+    readonly_fields = ("id", "created_at", "updated_at")
+    fields = ("id", "display_name", "discord_id", "created_at", "updated_at")
+    list_display = ("display_name", "discord_id")
 
 
 class InlineAPITokenAdmin(admin.TabularInline):
@@ -41,3 +47,4 @@ class FerryUserAdmin(UserAdmin):
 
 admin.site.register(User, FerryUserAdmin)
 admin.site.unregister(Group)
+admin.site.register(Person, PersonAdmin)

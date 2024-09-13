@@ -8,11 +8,11 @@ from django.core.signing import TimestampSigner
 from django.test import Client
 from django.urls import reverse_lazy
 
-from ferry.accounts.models import User
+from ferry.accounts.factories import PersonFactory
+from ferry.accounts.models import Person, User
 from ferry.conftest import APITest
 from ferry.core.discord import NoSuchGuildMemberError
-from ferry.court.factories import AccusationFactory, PersonFactory
-from ferry.court.models import Person
+from ferry.court.factories import AccusationFactory
 
 
 @pytest.mark.django_db
