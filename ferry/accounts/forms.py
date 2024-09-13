@@ -58,3 +58,16 @@ class UserPersonLinkForm(forms.Form):
     def save(self) -> None:
         self.user.person = self.cleaned_data["link_code"]
         self.user.save()
+
+
+class PersonProfileForm(forms.ModelForm):
+
+    class Meta:
+        model = Person
+        fields = ('display_name',)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.add_input(Submit("submit", "Save"))

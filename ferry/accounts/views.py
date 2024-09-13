@@ -7,11 +7,14 @@ from django.contrib import messages
 from django.contrib.auth import login, mixins
 from django.contrib.auth import views as auth_views
 from django.db.models.base import Model as Model
+from django.db.models.query import QuerySet
+from django.forms import BaseModelForm
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import FormView, View
+from django.views.generic import FormView, View, UpdateView
 
-from ferry.accounts.forms import UserPersonLinkForm
+from ferry.accounts.forms import PersonProfileForm, UserPersonLinkForm
+from ferry.court.models import Person
 
 from .models import User
 from .oauth import oauth_config
@@ -102,4 +105,20 @@ class UnlinkedAccountView(mixins.LoginRequiredMixin, FormView):
     def form_valid(self, form: UserPersonLinkForm) -> http.HttpResponse:
         form.save()
         messages.info(self.request, "Your Discord account has been successfully linked.")
+        return super().form_valid(form)
+
+
+class ProfileView(mixins.LoginRequiredMixin, UpdateView):
+
+    form_class = PersonProfileForm
+    template_name = "accounts/profile.html"
+    success_url = reverse_lazy('accounts:profile')
+
+    def get_object(self, queryset: QuerySet[Any] | None = None) -> Person:
+        assert self.request.user.is_authenticated
+        assert self.request.user.person
+        return self.request.user.person
+
+    def form_valid(self, form: BaseModelForm) -> http.HttpResponse:
+        messages.info(self.request, "Updated profile.")
         return super().form_valid(form)

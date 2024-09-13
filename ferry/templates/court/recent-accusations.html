@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Recent Accusations{% endblock %}
+{% block page_title %}Recent Accusations{% endblock %}
+
+{% block content %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active" aria-current="page">Recent Accusations</li>
+    </ol>
+  </nav>
+
+  {% for accusation in object_list %}
+    {% include "inc/accusation-card.html" with accusation=accusation %}
+  {% empty %}
+    <p>Weird, no accusations have happened.</p>
+  {% endfor %}
+{% endblock %}

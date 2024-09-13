@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags static %}
+
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active" aria-current="page">My Profile</li>
+    </ol>
+  </nav>
+  {% crispy form %}
+{% endblock %}
