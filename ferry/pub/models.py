@@ -1,6 +1,18 @@
+from __future__ import annotations
+
 import uuid
 
 from django.db import models
+
+from ferry.accounts.models import User
+
+
+class PubQuerySet(models.QuerySet):
+    def for_user(self, user: User) -> PubQuerySet:
+        return self.all()
+
+
+PubManager = models.Manager.from_queryset(PubQuerySet)
 
 
 class Pub(models.Model):
@@ -11,6 +23,8 @@ class Pub(models.Model):
     menu_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    objects = PubManager()
 
     def __str__(self) -> str:
         return f"{self.name} {self.emoji}"
@@ -42,7 +56,6 @@ class PubEvent(models.Model):
 
     timestamp = models.DateTimeField("Timestamp of Event")
     pub = models.ForeignKey(Pub, on_delete=models.PROTECT, related_name="events")
-
     table = models.ForeignKey(PubTable, on_delete=models.PROTECT, blank=True, null=True, related_name="events")
     attendees = models.ManyToManyField("accounts.Person", related_name="events_attended")
 
@@ -51,6 +64,7 @@ class PubEvent(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     class Meta:
+        # TODO: validate table is at pub
         constraints = [
             models.UniqueConstraint(
                 models.functions.TruncDate("timestamp"),
