@@ -447,6 +447,20 @@ files = [
 django = ">=4.2"
 
 [[package]]
+name = "django-emoji-picker"
+version = "0.0.6"
+description = "Django app providing text input and textarea widgets with emoji picker"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-emoji-picker-0.0.6.tar.gz", hash = "sha256:b13a7b5ebb192b710502c2b72efc4dea02e048cc6da21286608a998b59c4c251"},
+    {file = "django_emoji_picker-0.0.6-py3-none-any.whl", hash = "sha256:7931537b93608c051a82f2510838235e08b8c829a289e55382ff3aa09809302c"},
+]
+
+[package.dependencies]
+django = ">=2"
+
+[[package]]
 name = "django-filter"
 version = "24.3"
 description = "Django-filter is a reusable Django application for allowing users to filter querysets dynamically."
@@ -1310,4 +1324,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "8aa9d88c0a7101f91362ef00a5b2ab5527c3813feb3cdc6f064b14e565d5d647"
+content-hash = "6afe86f680212eb98ee702304f30e05ca17f969e12d45a2653f5d602cfe2eef7"

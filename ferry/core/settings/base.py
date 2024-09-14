@@ -18,11 +18,13 @@ ALLOWED_HOSTS: list[str] = []
 INSTALLED_APPS = [
     "ferry.accounts",
     "ferry.court",
+    "ferry.pub",
     "drf_spectacular",
     "rest_framework",
     "crispy_forms",
     "crispy_bootstrap5",
     "django_filters",
+    "emoji_picker",
     "rules",
     "django.contrib.admin",
     "django.contrib.auth",
