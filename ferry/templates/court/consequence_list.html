@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Consequences{% endblock %}
+{% block page_title %}My Consequences{% endblock %}
+
+{% block buttons %}
+  <a class="btn btn-success" href="{% url 'court:consequence-create' %}">New Consequence</a>
+{% endblock %}
+
+{% block content %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active" aria-current="page">My Consequences</li>
+    </ol>
+  </nav>
+  <p>
+    Consequences are assigned to a person after they have been found guilty in the ferry game. <br/>
+    They should be in the <em>present perfect continuous</em> tense, so they should complete the sentence <code>$player has been sentenced to...</code>
+  </p>
+  <hr>
+  {% if object_list %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Consequence</th>
+          <th scope="col">Enabled</th>
+          <th scope="col">Victim Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for consequence in object_list %}
+          <tr>
+            <th scope="row">{{ consequence.content }}</th>
+            <td>{% if consequence.is_enabled %}✅{% else %}❌{% endif %}</td>
+            <td>{{ consequence.victim_count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>You have not created any consequences.</p>
+  {% endif %}
+{% endblock %}

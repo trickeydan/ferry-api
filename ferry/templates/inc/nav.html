@@ -10,6 +10,7 @@
           {% if request.user.person %}
             <a class="nav-link" aria-current="page" href="{% url 'court:scoreboard' %}">Current Scores</a>
             <a class="nav-link" aria-current="page" href="{% url 'court:recent-accusations' %}">Recent Accusations</a>
+            <a class="nav-link" aria-current="page" href="{% url 'court:consequence-list' %}">My Consequences</a>
           {% endif %}
         </ul>
 

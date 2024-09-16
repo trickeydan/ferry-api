@@ -31,7 +31,7 @@ ConsequenceManager = models.Manager.from_queryset(ConsequenceQuerySet)
 
 class Consequence(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
-    content = models.CharField(max_length=255)
+    content = models.CharField(max_length=255, unique=True)
     is_enabled = models.BooleanField(default=True)
     created_by = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="consequences")
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -117,7 +117,7 @@ RatificationManager = models.Manager.from_queryset(RatificationQuerySet)
 class Ratification(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     accusation = models.OneToOneField(Accusation, on_delete=models.CASCADE, related_name="ratification")
-    consequence = models.ForeignKey(Consequence, on_delete=models.PROTECT, related_name="+")
+    consequence = models.ForeignKey(Consequence, on_delete=models.PROTECT, related_name="ratifications")
     created_by = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="ratifications")
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
