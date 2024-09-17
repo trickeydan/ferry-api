@@ -28,8 +28,8 @@ class PubTableAdmin(admin.ModelAdmin):
 
 
 class PubEventAdmin(admin.ModelAdmin):
-    readonly_fields = ("id", "created_at", "updated_at")
-    fields = ("id", "timestamp", "pub", "table", "attendees", "created_by", "created_at", "updated_at")
+    readonly_fields = ("id", "discord_id", "created_at", "updated_at")
+    fields = ("id", "timestamp", "discord_id", "pub", "table", "attendees", "created_by", "created_at", "updated_at")
     list_display = ("timestamp", "pub")
     filter_horizontal = ("attendees",)
 
