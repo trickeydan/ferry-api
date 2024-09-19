@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from ferry.pub.models import Pub, PubEvent
+from ferry.accounts.api.serializers import PersonLinkSerializer
+from ferry.accounts.models import Person
+from ferry.pub.models import Pub, PubEvent, PubTable
 
 
 class PubSerializer(serializers.ModelSerializer):
@@ -9,7 +11,24 @@ class PubSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "emoji", "map_url", "menu_url")
 
 
+class PubLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pub
+        fields = ("id", "name")
+
+
+class PubTableSerializer(serializers.ModelSerializer):
+    pub = PubLinkSerializer()
+
+    class Meta:
+        model = PubTable
+        fields = ("id", "pub", "number")
+
+
 class PubEventSerializer(serializers.ModelSerializer):
+    attendees = PersonLinkSerializer(read_only=True, many=True)
+    table = PubTableSerializer(read_only=True)
+
     class Meta:
         model = PubEvent
         fields = (
@@ -23,3 +42,11 @@ class PubEventSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
+
+class PubEventAddRemoveAttendeeSerializer(serializers.Serializer):
+    person = serializers.PrimaryKeyRelatedField(queryset=Person.objects.all())
+
+
+class PubEventTableSerializer(serializers.Serializer):
+    table_number = serializers.IntegerField(max_value=1000, min_value=1, required=True)

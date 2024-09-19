@@ -74,16 +74,7 @@ class PubEvent(models.Model):
 
     objects = PubEventManager()
 
-    class Meta:
-        # TODO: validate table is at pub
-        constraints = [
-            models.UniqueConstraint(
-                models.functions.TruncDate("timestamp"),
-                "pub",
-                name="unique_date_per_pub",
-                violation_error_message="There is another event at that pub on that date.",
-            ),
-        ]
+    # TODO: validate table is at pub
 
     def __str__(self) -> str:
         return f"Pub at {self.pub} on {self.timestamp.date()}"
