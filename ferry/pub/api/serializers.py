@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from ferry.accounts.api.serializers import PersonLinkSerializer
 from ferry.accounts.models import Person
+from ferry.court.api.serializers import PersonLinkWithDiscordIdSerializer
 from ferry.pub.models import Pub, PubEvent, PubTable
 
 
@@ -26,7 +27,7 @@ class PubTableSerializer(serializers.ModelSerializer):
 
 
 class PubEventSerializer(serializers.ModelSerializer):
-    attendees = PersonLinkSerializer(read_only=True, many=True)
+    attendees = PersonLinkWithDiscordIdSerializer(read_only=True, many=True)
     table = PubTableSerializer(read_only=True)
 
     class Meta:

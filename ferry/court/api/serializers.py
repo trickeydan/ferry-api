@@ -15,6 +15,13 @@ class PersonLinkSerializer(serializers.ModelSerializer[Person]):
         fields = ("id", "display_name")
 
 
+class PersonLinkWithDiscordIdSerializer(serializers.ModelSerializer[Person]):
+    class Meta(PersonLinkSerializer.Meta):
+        model = Person
+        fields = PersonLinkSerializer.Meta.fields + ("discord_id", )
+
+
+
 class PersonSerializer(serializers.ModelSerializer[Person]):
     discord_id = serializers.IntegerField(allow_null=True, required=False)
     current_score = serializers.DecimalField(max_digits=6, decimal_places=2, read_only=True)
