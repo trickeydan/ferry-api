@@ -66,7 +66,6 @@ class PubEvent(models.Model):
     pub = models.ForeignKey(Pub, on_delete=models.PROTECT, related_name="events")
     discord_id = models.BigIntegerField(verbose_name="Discord Scheduled Event ID", blank=True, null=True, unique=True)
     table = models.ForeignKey(PubTable, on_delete=models.PROTECT, blank=True, null=True, related_name="events")
-    attendees = models.ManyToManyField("accounts.Person", related_name="events_attended", blank=True)
 
     created_by = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -78,3 +77,25 @@ class PubEvent(models.Model):
 
     def __str__(self) -> str:
         return f"Pub at {self.pub} on {self.timestamp.date()}"
+
+
+class PubEventRSVP(models.Model):
+    id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
+
+    person = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="pub_event_rsvps")
+    pub_event = models.ForeignKey(PubEvent, on_delete=models.CASCADE, related_name="pub_event_rsvps")
+    is_attending = models.BooleanField()  # Can be false for an opt-out.
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("person", "pub_event"), name="one_rsvp_per_person_per_event"),
+        ]
+
+    def __str__(self) -> str:
+        if self.is_attending:
+            return f"{self.person} is attending {self.pub_event}"
+        else:
+            return f"{self.person} is not attending {self.pub_event}"

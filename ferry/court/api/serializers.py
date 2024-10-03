@@ -12,14 +12,13 @@ from ferry.court.models import Accusation, Consequence, Ratification
 class PersonLinkSerializer(serializers.ModelSerializer[Person]):
     class Meta:
         model = Person
-        fields = ("id", "display_name")
+        fields: tuple[str, ...] = ("id", "display_name")
 
 
 class PersonLinkWithDiscordIdSerializer(serializers.ModelSerializer[Person]):
     class Meta(PersonLinkSerializer.Meta):
         model = Person
-        fields = PersonLinkSerializer.Meta.fields + ("discord_id", )
-
+        fields = PersonLinkSerializer.Meta.fields + ("discord_id",)
 
 
 class PersonSerializer(serializers.ModelSerializer[Person]):

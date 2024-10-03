@@ -11,7 +11,7 @@ from ferry.pub.api.serializers import (
     PubEventTableSerializer,
     PubSerializer,
 )
-from ferry.pub.models import Pub, PubEvent, PubEventQuerySet, PubQuerySet, PubTable
+from ferry.pub.models import Pub, PubEvent, PubEventQuerySet, PubEventRSVP, PubQuerySet, PubTable
 
 
 @extend_schema_view(
@@ -62,7 +62,12 @@ class PubEventViewset(
         attendee_info = PubEventAddRemoveAttendeeSerializer(data=request.data)
         attendee_info.is_valid(raise_exception=True)
 
-        pub_event.attendees.add(attendee_info.validated_data["person"])
+        rsvp, created = PubEventRSVP.objects.get_or_create(
+            pub_event=pub_event, person=attendee_info.validated_data["person"], defaults={"is_attending": True}
+        )
+        if not created:
+            rsvp.is_attending = True
+            rsvp.save()
 
         serializer = PubEventSerializer(instance=pub_event)
         return Response(serializer.data)
@@ -80,7 +85,12 @@ class PubEventViewset(
         attendee_info = PubEventAddRemoveAttendeeSerializer(data=request.data)
         attendee_info.is_valid(raise_exception=True)
 
-        pub_event.attendees.remove(attendee_info.validated_data["person"])
+        rsvp, created = PubEventRSVP.objects.get_or_create(
+            pub_event=pub_event, person=attendee_info.validated_data["person"], defaults={"is_attending": False}
+        )
+        if not created:
+            rsvp.is_attending = False
+            rsvp.save()
 
         serializer = PubEventSerializer(instance=pub_event)
         return Response(serializer.data)
