@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}SUWS Pub{% endblock %}
+
+{% block content %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active" aria-current="page">Home</li>
+    </ol>
+  </nav>
+
+  {% with view=request.resolver_match.view_name %}
+    <ul class="nav nav-tabs mb-2">
+      <li class="nav-item">
+        <a class="nav-link {% if view == 'court:scoreboard' %}active{% endif %}" aria-current="page" href="{% url 'court:scoreboard' %}">Scoreboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if view == 'court:recent-accusations' %}active{% endif %}" aria-current="page" href="{% url 'court:recent-accusations' %}">Recent Accusations</a>
+      </li>
+    </ul>
+  {% endwith %}
+{% endblock %}

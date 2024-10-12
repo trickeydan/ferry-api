@@ -1,13 +1,10 @@
-{% extends "base.html" %}
+{% extends "base_home.html" %}
 {% load static %}
 
-{% block title %}Current Scores{% endblock %}
-{% block page_title %}Current Scores{% endblock %}
+{% block title %}Scoreboard{% endblock %}
 
 {% block content %}
-  <p>Hello {{ request.user.display_name }}</p>
-
-
+  {{ block.super }}
   <table class="table">
     <thead>
       <tr>
