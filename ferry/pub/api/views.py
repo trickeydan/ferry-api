@@ -1,3 +1,5 @@
+from typing import Any
+
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, permissions, viewsets
@@ -26,6 +28,35 @@ class PubViewset(viewsets.ReadOnlyModelViewSet):
         return Pub.objects.for_user(self.request.user)
 
 
+class PubEventObjectPermission(permissions.BasePermission):
+    def has_permission(self, request: Request, view: Any) -> bool:
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if request.method in ["PUT", "PATCH", "DELETE"]:
+            return True
+
+        if request.method == "POST":
+            return request.user.has_perm("pub.create_event")
+
+        return False
+
+    def has_object_permission(self, request: Request, view: Any, pub_event: Any) -> bool:
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if request.method == "POST":
+            return True
+
+        if request.method in ["PUT", "PATCH"]:
+            return request.user.has_perm("pub.edit_event", pub_event)
+
+        if request.method == "DELETE":
+            return request.user.has_perm("pub.delete_event", pub_event)
+
+        return False
+
+
 @extend_schema_view(
     list=extend_schema(tags=["Pub - Events"]),
     retrieve=extend_schema(tags=["Pub - Events"]),
@@ -41,7 +72,7 @@ class PubEventViewset(
     viewsets.GenericViewSet,
 ):
     serializer_class = PubEventSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, PubEventObjectPermission]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ("discord_id",)
 

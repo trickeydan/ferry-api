@@ -57,3 +57,10 @@ rules.add_perm("court.assign_discord_id_to_person", rules.is_superuser)
 rules.add_perm("court.view_ratification", rules.always_allow)
 rules.add_perm("court.create_ratification", rules.always_allow)
 rules.add_perm("court.delete_ratification", rules.is_superuser)
+
+# Pub Events
+
+rules.add_perm("pub.view_event", rules.always_allow)
+rules.add_perm("pub.create_event", rules.is_superuser)
+rules.add_perm("pub.edit_event", rules.is_superuser)
+rules.add_perm("pub.delete_event", rules.is_superuser)
