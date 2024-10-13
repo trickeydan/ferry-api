@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% load static crispy_forms_tags %}
 
-{% block title %}New Consequence{% endblock %}
-{% block page_title %}New Consequence{% endblock %}
+{% block title %}Create API Token{% endblock %}
+{% block page_title %}Create API Token{% endblock %}
 
 {% block content %}
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><a href="{% url 'accounts:profile' %}">My Profile</a></li>
       <li class="breadcrumb-item"><a href="{% url 'accounts:api-tokens' %}">API Tokens</a></li>
-      <li class="breadcrumb-item active" aria-current="page">Create Token</li>
+      <li class="breadcrumb-item active" aria-current="page">Create API Token</li>
     </ol>
   </nav>
   <p>API tokens created here are linked directly to your user and will perform actions as if you were performing them directly. There is currently no mechanism to limit the areas of your account that an API token can access.</p>

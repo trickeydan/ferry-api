@@ -1,18 +1,9 @@
-{% extends "base.html" %}
+{% extends "base_profile.html" %}
 {% load crispy_forms_tags static %}
 
-{% block title %}My Profile{% endblock %}
-{% block page_title %}My Profile{% endblock %}
-
-{% block buttons %}
-  <a class="btn btn-primary" href="{% url 'accounts:api-tokens' %}">API Tokens</a>
-{% endblock %}
+{% block title %}My Details{% endblock %}
 
 {% block content %}
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item active" aria-current="page">My Profile</li>
-    </ol>
-  </nav>
+  {{ block.super }}
   {% crispy form %}
 {% endblock %}

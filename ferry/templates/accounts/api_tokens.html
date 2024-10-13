@@ -1,21 +1,14 @@
-{% extends "base.html" %}
+{% extends "base_profile.html" %}
 {% load crispy_forms_tags django_htmx static %}
 
 {% block title %}API Tokens{% endblock %}
-{% block page_title %}API Tokens{% endblock %}
 
 {% block buttons %}
   <a class="btn btn-success" href="{% url 'accounts:api-token-create' %}">Create Token</a>
 {% endblock %}
 
 {% block content %}
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item" aria-current="page"><a href="{% url 'accounts:profile' %}">My Profile</a></li>
-      <li class="breadcrumb-item active" aria-current="page">API Tokens</li>
-    </ol>
-  </nav>
-
+  {{ block.super }}
   <table class="table">
     <thead>
       <tr>
