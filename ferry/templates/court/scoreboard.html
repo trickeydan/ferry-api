@@ -20,7 +20,7 @@
         <tr>
           <th scope="row">{{ person.rank }}</th>
           <td><a href="{% url 'court:person_score' person.id %}">{{ person.display_name }}</a></td>
-          <td>{{ person.current_score }}</td>
+          <td>{{ person.current_score|floatformat:2 }}</td>
           <td>{{ person.num_ratified_accusations }}</td>
           <td><a href="{% url 'court:person_score' person.id %}">View</a></td>
         </tr>
