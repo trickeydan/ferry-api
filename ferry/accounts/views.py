@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from django import http
@@ -8,18 +8,19 @@ from django.contrib import messages
 from django.contrib.auth import login, mixins
 from django.contrib.auth import views as auth_views
 from django.core.exceptions import SuspiciousOperation
-from django.db.models.base import Model as Model
+from django.db import models
 from django.db.models.query import QuerySet
 from django.forms import BaseModelForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
 
 from ferry.accounts.forms import CreateAPITokenForm, PersonProfileForm, UserPersonLinkForm
 from ferry.accounts.models import Person
 from ferry.core.http import HttpRequest
+from ferry.court.models import Accusation
 
-from .models import APIToken, User
+from .models import APIToken, PersonQuerySet, User
 from .oauth import oauth_config
 
 
@@ -109,6 +110,35 @@ class UnlinkedAccountView(mixins.LoginRequiredMixin, FormView):
         form.save()
         messages.info(self.request, "Your Discord account has been successfully linked.")
         return super().form_valid(form)
+
+
+class PersonListView(mixins.LoginRequiredMixin, ListView):
+    template_name = "accounts/person_list.html"
+
+    def get_queryset(self) -> PersonQuerySet:
+        assert self.request.user.is_authenticated
+        qs = Person.objects.for_user(self.request.user)
+        qs = qs.order_by(models.functions.Lower("display_name"))
+        return qs
+
+
+class PersonDetailView(mixins.LoginRequiredMixin, DetailView):
+    model = Person
+    template_name = "accounts/person_detail.html"
+
+    def get_queryset(self) -> PersonQuerySet:
+        qs = cast(PersonQuerySet, super().get_queryset())
+        qs = qs.with_current_score()
+        qs = qs.with_num_ratified_accusations()
+        return qs
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        assert self.request.user.is_authenticated
+        qs = Accusation.objects.for_user(self.request.user)
+        qs = qs.filter(models.Q(suspect=self.object) | models.Q(created_by=self.object))
+        qs = qs.order_by("-created_at")
+
+        return super().get_context_data(accusations=qs, **kwargs)
 
 
 class ProfileView(mixins.LoginRequiredMixin, UpdateView):

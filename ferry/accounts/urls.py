@@ -14,6 +14,8 @@ urlpatterns = [
         name="sso_oidc_redirect",
     ),
     path("unlinked/", views.UnlinkedAccountView.as_view(), name="unlinked_account"),
+    path("people/", views.PersonListView.as_view(), name="person-list"),
+    path("people/<uuid:pk>/", views.PersonDetailView.as_view(), name="person-detail"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
     path("profile/api-tokens/", views.ProfileAPITokenView.as_view(), name="api-tokens"),
     path("profile/api-tokens/new/", views.CreateAPITokenView.as_view(), name="api-token-create"),

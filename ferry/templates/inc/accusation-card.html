@@ -4,7 +4,7 @@
   </div>
   <div class="card-body">
     <h5 class="card-title">
-      <a href="{% url 'court:person_score' accusation.created_by.id %}">{{ accusation.created_by }}</a> accused <a href="{% url 'court:person_score' accusation.suspect.id %}">{{ accusation.suspect }}</a>
+      <a href="{% url 'accounts:person-detail' accusation.created_by.id %}">{{ accusation.created_by }}</a> accused <a href="{% url 'accounts:person-detail' accusation.suspect.id %}">{{ accusation.suspect }}</a>
     </h5>
     {% if accusation.quote != "NO QUOTE RECORDED" %}
       <p class="card-text">
@@ -21,7 +21,7 @@
   </div>
   {% if accusation.ratification %}
     <div class="card-footer text-body-secondary">
-      <p>This accusation was ratified by <a href="{% url 'court:person_score' accusation.ratification.created_by.id %}">{{ accusation.ratification.created_by }}</a>.</p>
+      <p>This accusation was ratified by <a href="{% url 'accounts:person-detail' accusation.ratification.created_by.id %}">{{ accusation.ratification.created_by }}</a>.</p>
       <p><strong>{{ accusation.suspect }} was sentenced to {{ accusation.ratification.consequence }}</strong></p>
     </div>
   {% endif %}

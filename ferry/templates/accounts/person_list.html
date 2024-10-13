@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}People{% endblock %}
+{% block page_title %}People{% endblock %}
+
+{% block content %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for person in object_list %}
+        <tr>
+          <th scope="row">{{ person.display_name }}</th>
+          <td><a href="{% url 'accounts:person-detail' person.id %}">View</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
