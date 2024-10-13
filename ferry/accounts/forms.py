@@ -9,7 +9,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature, TimestampSigner
 
-from ferry.accounts.models import Person, User
+from ferry.accounts.models import APIToken, Person, User
 
 
 class UserPersonLinkForm(forms.Form):
@@ -69,3 +69,15 @@ class PersonProfileForm(forms.ModelForm):
 
         self.helper = FormHelper()
         self.helper.add_input(Submit("submit", "Save"))
+
+
+class CreateAPITokenForm(forms.ModelForm):
+    class Meta:
+        model = APIToken
+        fields = ("name",)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.add_input(Submit("submit", "Create Token"))

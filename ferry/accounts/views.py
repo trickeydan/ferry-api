@@ -13,9 +13,9 @@ from django.db.models.query import QuerySet
 from django.forms import BaseModelForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, FormView, ListView, UpdateView, View
 
-from ferry.accounts.forms import PersonProfileForm, UserPersonLinkForm
+from ferry.accounts.forms import CreateAPITokenForm, PersonProfileForm, UserPersonLinkForm
 from ferry.accounts.models import Person
 from ferry.core.http import HttpRequest
 
@@ -153,3 +153,18 @@ class DeactivateAPITokenView(mixins.LoginRequiredMixin, View):
 
 class ReactivateAPITokenView(DeactivateAPITokenView):
     new_state = True
+
+
+class CreateAPITokenView(mixins.LoginRequiredMixin, CreateView):
+    model = APIToken
+    form_class = CreateAPITokenForm
+    template_name = "accounts/api_token_create.html"
+    success_url = reverse_lazy("accounts:api-tokens")
+
+    def form_valid(self, form: BaseModelForm) -> http.HttpResponse:
+        form.instance.user = self.request.user
+        resp = super().form_valid(form)
+
+        assert self.object
+        messages.info(self.request, f'Your new token is: "{self.object.token}"')
+        return resp

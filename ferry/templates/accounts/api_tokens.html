@@ -5,7 +5,7 @@
 {% block page_title %}My Profile{% endblock %}
 
 {% block buttons %}
-  <a class="btn btn-success" href="#">Create Token</a>
+  <a class="btn btn-success" href="{% url 'accounts:api-token-create' %}">Create Token</a>
 {% endblock %}
 
 {% block content %}
