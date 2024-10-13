@@ -91,13 +91,13 @@ class SSOOIDCRedirectView(View):
 class UnlinkedAccountView(mixins.LoginRequiredMixin, FormView):
     template_name = "accounts/unlinked.html"
     form_class = UserPersonLinkForm
-    success_url = reverse_lazy("court:scoreboard")
+    success_url = reverse_lazy("dashboard:scoreboard")
 
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> http.HttpResponseBase:  # type: ignore[override]
         assert request.user.is_authenticated
 
         if request.user.person is not None:
-            return redirect("court:scoreboard")
+            return redirect("dashboard:scoreboard")
 
         return super().dispatch(request, *args, **kwargs)
 

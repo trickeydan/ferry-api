@@ -27,8 +27,9 @@ from ferry.core.api.router import urls as api_urls
 urlpatterns = []
 
 urlpatterns = [
-    path("", include("ferry.court.urls", namespace="court")),
+    path("", include("ferry.dashboard.urls", namespace="dashboard")),
     path("accounts/", include("ferry.accounts.urls")),
+    path("ferries/", include("ferry.court.urls", namespace="court")),
     path("admin/", admin.site.urls),
     path("api/", TemplateView.as_view(template_name="api_index.html")),
     # API v2

@@ -13,10 +13,10 @@
   {% with view=request.resolver_match.view_name %}
     <ul class="nav nav-tabs mb-2">
       <li class="nav-item">
-        <a class="nav-link {% if view == 'court:scoreboard' %}active{% endif %}" aria-current="page" href="{% url 'court:scoreboard' %}">Scoreboard</a>
+        <a class="nav-link {% if view == 'dashboard:scoreboard' %}active{% endif %}" aria-current="page" href="{% url 'dashboard:scoreboard' %}">Scoreboard</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link {% if view == 'court:recent-accusations' %}active{% endif %}" aria-current="page" href="{% url 'court:recent-accusations' %}">Recent Accusations</a>
+        <a class="nav-link {% if view == 'dashboard:recent-accusations' %}active{% endif %}" aria-current="page" href="{% url 'dashboard:recent-accusations' %}">Recent Accusations</a>
       </li>
     </ul>
   {% endwith %}
