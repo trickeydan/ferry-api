@@ -7,13 +7,15 @@ from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, ListView
 
+from ferry.core.mixins import BreadcrumbsMixin
 from ferry.court.forms import ConsequenceCreateForm
 
 from .models import Consequence
 
 
-class ConsequenceListView(LoginRequiredMixin, ListView):
+class ConsequenceListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
     template_name = "court/consequence_list.html"
+    breadcrumbs = [(None, "Ferries"), (None, "My Consequences")]
 
     def get_queryset(self) -> models.QuerySet[Any]:
         assert self.request.user.is_authenticated
@@ -27,11 +29,16 @@ class ConsequenceListView(LoginRequiredMixin, ListView):
         return qs
 
 
-class ConsequenceCreateView(LoginRequiredMixin, CreateView):
+class ConsequenceCreateView(LoginRequiredMixin, BreadcrumbsMixin, CreateView):
     template_name = "court/consequence_create.html"
     model = Consequence
     form_class = ConsequenceCreateForm
     success_url = reverse_lazy("court:consequence-list")
+    breadcrumbs = [
+        (None, "Ferries"),
+        (reverse_lazy("court:consequence-list"), "My Consequences"),
+        (None, "New Consequence"),
+    ]
 
     def get_form_kwargs(self) -> dict[str, Any]:
         assert self.request.user.is_authenticated

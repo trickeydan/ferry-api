@@ -5,11 +5,5 @@
 {% block page_title %}New Consequence{% endblock %}
 
 {% block content %}
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'court:consequence-list' %}">My Consequences</a></li>
-      <li class="breadcrumb-item active" aria-current="page">New Consequence</li>
-    </ol>
-  </nav>
   {% crispy form %}
 {% endblock %}

@@ -18,6 +18,7 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Upd
 from ferry.accounts.forms import CreateAPITokenForm, PersonProfileForm, UserPersonLinkForm
 from ferry.accounts.models import Person
 from ferry.core.http import HttpRequest
+from ferry.core.mixins import BreadcrumbsMixin
 from ferry.court.models import Accusation
 
 from .models import APIToken, PersonQuerySet, User
@@ -112,8 +113,9 @@ class UnlinkedAccountView(mixins.LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-class PersonListView(mixins.LoginRequiredMixin, ListView):
+class PersonListView(mixins.LoginRequiredMixin, BreadcrumbsMixin, ListView):
     template_name = "accounts/person_list.html"
+    breadcrumbs = [(None, "People")]
 
     def get_queryset(self) -> PersonQuerySet:
         assert self.request.user.is_authenticated
@@ -122,9 +124,15 @@ class PersonListView(mixins.LoginRequiredMixin, ListView):
         return qs
 
 
-class PersonDetailView(mixins.LoginRequiredMixin, DetailView):
+class PersonDetailView(mixins.LoginRequiredMixin, BreadcrumbsMixin, DetailView):
     model = Person
     template_name = "accounts/person_detail.html"
+
+    def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
+        return super().get_breadcrumbs() + [
+            (reverse_lazy("accounts:person-list"), "People"),
+            (None, self.object.display_name),
+        ]
 
     def get_queryset(self) -> PersonQuerySet:
         qs = cast(PersonQuerySet, super().get_queryset())
@@ -141,10 +149,11 @@ class PersonDetailView(mixins.LoginRequiredMixin, DetailView):
         return super().get_context_data(accusations=qs, **kwargs)
 
 
-class ProfileView(mixins.LoginRequiredMixin, UpdateView):
+class ProfileView(mixins.LoginRequiredMixin, BreadcrumbsMixin, UpdateView):
     form_class = PersonProfileForm
     template_name = "accounts/profile.html"
     success_url = reverse_lazy("accounts:profile")
+    breadcrumbs = [(None, "My Profile")]
 
     def get_object(self, queryset: QuerySet[Any] | None = None) -> Person:
         assert self.request.user.is_authenticated
@@ -156,9 +165,26 @@ class ProfileView(mixins.LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class ProfileAPITokenView(mixins.LoginRequiredMixin, ListView):
+class CreateAPITokenView(mixins.LoginRequiredMixin, BreadcrumbsMixin, CreateView):
+    model = APIToken
+    form_class = CreateAPITokenForm
+    template_name = "accounts/api_token_create.html"
+    success_url = reverse_lazy("accounts:api-tokens")
+    breadcrumbs = [(reverse_lazy("accounts:profile"), "My Profile"), (None, "Create API Token")]
+
+    def form_valid(self, form: BaseModelForm) -> http.HttpResponse:
+        form.instance.user = self.request.user
+        resp = super().form_valid(form)
+
+        assert self.object
+        messages.info(self.request, f'Your new token is: "{self.object.token}"')
+        return resp
+
+
+class ProfileAPITokenView(mixins.LoginRequiredMixin, BreadcrumbsMixin, ListView):
     template_name = "accounts/api_tokens.html"
     success_url = reverse_lazy("accounts:api-tokens")
+    breadcrumbs = [(None, "My Profile")]
 
     def get_queryset(self) -> QuerySet[APIToken]:
         assert self.request.user.is_authenticated
@@ -183,18 +209,3 @@ class DeactivateAPITokenView(mixins.LoginRequiredMixin, View):
 
 class ReactivateAPITokenView(DeactivateAPITokenView):
     new_state = True
-
-
-class CreateAPITokenView(mixins.LoginRequiredMixin, CreateView):
-    model = APIToken
-    form_class = CreateAPITokenForm
-    template_name = "accounts/api_token_create.html"
-    success_url = reverse_lazy("accounts:api-tokens")
-
-    def form_valid(self, form: BaseModelForm) -> http.HttpResponse:
-        form.instance.user = self.request.user
-        resp = super().form_valid(form)
-
-        assert self.object
-        messages.info(self.request, f'Your new token is: "{self.object.token}"')
-        return resp

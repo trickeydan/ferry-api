@@ -5,13 +5,6 @@
 {% block page_title %}{{ object.display_name }}{% endblock %}
 
 {% block content %}
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'accounts:person-list' %}">People</a></li>
-      <li class="breadcrumb-item active" aria-current="page">{{ object.display_name }}</li>
-    </ol>
-  </nav>
-
   <div class="card mb-2">
     <div class="card-body">
       <p>Current Score: {{ object.current_score }}</p>

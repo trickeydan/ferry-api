@@ -6,11 +6,12 @@ from django.db.models.functions import DenseRank
 from django.views.generic import ListView
 
 from ferry.accounts.models import Person, PersonQuerySet
+from ferry.core.mixins import BreadcrumbsMixin
 from ferry.court.models import Accusation
 
 
-class ScoreboardView(LoginRequiredMixin, ListView):
-    template_name = "court/scoreboard.html"
+class ScoreboardView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
+    template_name = "dashboard/scoreboard.html"
 
     def get_queryset(self) -> PersonQuerySet:
         assert self.request.user.is_authenticated
@@ -24,8 +25,8 @@ class ScoreboardView(LoginRequiredMixin, ListView):
         return qs
 
 
-class RecentAccusationsView(LoginRequiredMixin, ListView):
-    template_name = "court/recent-accusations.html"
+class RecentAccusationsView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
+    template_name = "dashboard/recent-accusations.html"
 
     def get_queryset(self) -> models.QuerySet[Any]:
         assert self.request.user.is_authenticated

@@ -12,6 +12,7 @@
       <div class="row">
         <div class="col">
           <h1>{% block page_title %}{% endblock %}</h1>
+          {% include "inc/breadcrumbs.html" %}
         </div>
         <div class="col-2 align-self-center">
           {% block buttons %}{% endblock %}
