@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags django_htmx static %}
+
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block buttons %}
+  <a class="btn btn-success" href="#">Create Token</a>
+{% endblock %}
+
+{% block content %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item" aria-current="page"><a href="{% url 'accounts:profile' %}">My Profile</a></li>
+      <li class="breadcrumb-item active" aria-current="page">API Tokens</li>
+    </ol>
+  </nav>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Token</th>
+        <th scope="col">Active?</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for api_token in object_list %}
+        {% include "accounts/api_tokens__table_row.html" %}
+      {% empty %}
+        <p>You do not have any API Tokens.</p>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% django_htmx_script %}
+{% endblock %}

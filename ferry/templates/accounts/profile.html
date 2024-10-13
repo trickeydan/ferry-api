@@ -4,6 +4,10 @@
 {% block title %}My Profile{% endblock %}
 {% block page_title %}My Profile{% endblock %}
 
+{% block buttons %}
+  <a class="btn btn-primary" href="{% url 'accounts:api-tokens' %}">API Tokens</a>
+{% endblock %}
+
 {% block content %}
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">

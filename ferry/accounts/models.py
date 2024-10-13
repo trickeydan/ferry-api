@@ -29,10 +29,20 @@ class User(AbstractUser):
 class APIToken(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="api_tokens")
+    name = models.CharField(max_length=100)
     token = models.CharField(max_length=128, unique=True, editable=False, default=secrets.token_urlsafe)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "name"],
+                violation_error_message="Please choose a unique name for the token.",
+                name="unique_name_for_token_per_user",
+            )
+        ]
 
     def __str__(self) -> str:
         return f"API Token for {self.user}"

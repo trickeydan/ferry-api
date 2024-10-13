@@ -1,0 +1,35 @@
+{% load api_tags %}
+<tr>
+  <td>{{ api_token.name }}</td>
+  <th scope="row">{{ api_token.token|redact }}</th>
+  <td>{% if api_token.is_active %}✅{% else %}❌{% endif %}</td>
+  <td>
+    {% if api_token.is_active %}
+      <button class="btn btn-sm btn-danger"
+              hx-post="{% url 'accounts:api-tokens-deactivate' api_token.id %}"
+              hx-trigger='confirmed'
+              hx-target="closest tr"
+              hx-swap='outerHTML'
+              onClick="Swal.fire({title: 'Deactivate API Token', text:'Are you sure you want to deactivate the token?'}).then((result)=>{
+                       if(result.isConfirmed){
+                       htmx.trigger(this, 'confirmed');
+                       }
+                       })">
+        Deactivate
+      </button>
+    {% else %}
+      <button class="btn btn-sm btn-primary"
+              hx-post="{% url 'accounts:api-tokens-activate' api_token.id %}"
+              hx-trigger='confirmed'
+              hx-target="closest tr"
+              hx-swap='outerHTML'
+              onClick="Swal.fire({title: 'Reactivate API Token', text:'Are you sure you want to reactivate the token?'}).then((result)=>{
+                       if(result.isConfirmed){
+                       htmx.trigger(this, 'confirmed');
+                       }
+                       })">
+        Reactivate
+      </button>
+    {% endif %}
+  </td>
+</tr>

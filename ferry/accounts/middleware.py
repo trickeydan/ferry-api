@@ -3,9 +3,11 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from django.conf import settings
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import resolve
+
+from ferry.core.http import HttpRequest
 
 
 class UserLinkedToPersonMiddleware:

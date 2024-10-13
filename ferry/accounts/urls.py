@@ -15,4 +15,9 @@ urlpatterns = [
     ),
     path("unlinked/", views.UnlinkedAccountView.as_view(), name="unlinked_account"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
+    path("profile/api-tokens/", views.ProfileAPITokenView.as_view(), name="api-tokens"),
+    path("profile/api-tokens/<uuid:pk>/activate/", views.ReactivateAPITokenView.as_view(), name="api-tokens-activate"),
+    path(
+        "profile/api-tokens/<uuid:pk>/deactivate/", views.DeactivateAPITokenView.as_view(), name="api-tokens-deactivate"
+    ),
 ]
