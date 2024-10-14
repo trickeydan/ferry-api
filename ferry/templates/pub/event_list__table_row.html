@@ -1,0 +1,6 @@
+<tr>
+    <th scope="row">{{ pub_event.timestamp }}</th>
+    <td>{% if pub_event.table %}{{ pub_event.table }}{% else %}{{ pub_event.pub }}{% endif %}</td>
+    <td>{{ pub_event.attendee_count }}</td>
+    <td><a href="{% url 'pub:events-detail' pub_event.id %}">View</a></td>
+</tr>

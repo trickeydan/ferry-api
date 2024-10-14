@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ object }}{% endblock %}
+{% block page_title %}{{ object }}{% endblock %}
+
+{% block content %}
+  {% include "pub/inc/event_details.html" with event=object attendees=attendees %}
+{% endblock %}

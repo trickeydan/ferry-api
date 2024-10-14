@@ -1,0 +1,41 @@
+<div class="container">
+  <div class="row">
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Information</h5>
+          <dl class="row">
+            <dt class="col-sm-3">Date</dt>
+            <dd class="col-sm-9">{{ event.timestamp }}</dd>
+
+            <dt class="col-sm-3">Location</dt>
+            <dd class="col-sm-9">
+              {% if event.table %}{{ event.table }}{% else %}{{ event.pub }}{% endif %}<br/>
+              <a href="{{ event.pub.map_url }}">Map</a>
+            </dd>
+
+            {% if event.pub.menu_url %}
+              <dt class="col-sm-3">Menu</dt>
+              <dd class="col-sm-9"><a href="{{ event.pub.menu_url }}">View Menu</a></dd>
+            {% endif %}
+          </dl>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Attendees ({{ attendees|length }})</h5>
+          <p><small>Note: Only attendees from Discord are automatically added here currently.</small></p>
+          <ul class="list-group list-group-flush">
+            {% for attendee in attendees %}
+              <a class="list-group-item list-group-item-action" href="{% url 'accounts:person-detail' attendee.id %}">{{ attendee }}</a>
+            {% empty %}
+              <p>There are no attendees.</p>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

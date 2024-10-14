@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pub{% endblock %}
+{% block page_title %}Pub{% endblock %}
+
+{% block content %}
+  <h2 class="mb-2">Next Pub</h2>
+  {% if upcoming_pub %}
+    {% include "pub/inc/event_details.html" with event=upcoming_pub attendees=attendees %}
+  {% else %}
+    <p>The location of the next pub has not yet been decided. Please use <code>/pub next</code> in Discord.</p>
+  {% endif %}
+  <h2 class="mt-4">Events</h2>
+  <p>The following pub events are recorded:</p>
+  {% if object_list %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">Location</th>
+          <th scope="col">Attendees</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pub_event in object_list %}
+          {% include "pub/event_list__table_row.html" %}
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>There are no pub events.</p>
+  {% endif %}
+{% endblock %}

@@ -4,6 +4,7 @@ from rest_framework.utils.serializer_helpers import ReturnDict
 from ferry.accounts.models import Person
 from ferry.court.api.serializers import PersonLinkWithDiscordIdSerializer
 from ferry.pub.models import Pub, PubEvent, PubTable
+from ferry.pub.repository import get_attendees_for_pub_event
 
 
 class PubSerializer(serializers.ModelSerializer):
@@ -45,10 +46,8 @@ class PubEventSerializer(serializers.ModelSerializer):
         )
 
     def get_attendees(self, pub_event: PubEvent) -> ReturnDict:
-        attendee_ids = pub_event.pub_event_rsvps.filter(is_attending=True).values("person")
-        people = Person.objects.filter(id__in=attendee_ids)
-
-        serializer = PersonLinkWithDiscordIdSerializer(read_only=True, many=True, instance=people)
+        attendees = get_attendees_for_pub_event(pub_event)
+        serializer = PersonLinkWithDiscordIdSerializer(read_only=True, many=True, instance=attendees)
         return serializer.data
 
 
