@@ -159,11 +159,7 @@ class PubEventViewset(
     )
     @action(detail=False, methods=["GET"], permission_classes=[permissions.AllowAny])
     def next(self, request: Request) -> Response:
-        now = timezone.now()
-        upcoming_pubs = PubEvent.objects.filter(timestamp__gte=now).order_by("timestamp")
-        next_pub = upcoming_pubs.first()
-
-        if next_pub:
+        if next_pub := PubEvent.objects.get_next():
             serializer = PublicPubEventSerializer(instance=next_pub)
             return Response(serializer.data)
         else:

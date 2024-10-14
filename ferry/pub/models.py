@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 from django.db import models
+from django.utils import timezone
 
 from ferry.accounts.models import User
 
@@ -54,6 +56,12 @@ class PubTable(models.Model):
 class PubEventQuerySet(models.QuerySet):
     def for_user(self, user: User) -> PubEventQuerySet:
         return self.all()
+
+    def get_next(self, *, timestamp: datetime | None = None) -> PubEvent | None:
+        if timestamp is None:
+            timestamp = timezone.now()
+        upcoming_pubs = PubEvent.objects.filter(timestamp__gte=timestamp).order_by("timestamp")
+        return upcoming_pubs.first()
 
 
 PubEventManager = models.Manager.from_queryset(PubEventQuerySet)
