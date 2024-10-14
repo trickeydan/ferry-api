@@ -21,15 +21,12 @@
           <th scope="col">Consequence</th>
           <th scope="col">Enabled</th>
           <th scope="col">Victim Count</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for consequence in object_list %}
-          <tr>
-            <th scope="row">{{ consequence.content }}</th>
-            <td>{% if consequence.is_enabled %}✅{% else %}❌{% endif %}</td>
-            <td>{{ consequence.victim_count }}</td>
-          </tr>
+          {% include "court/consequence_list__table_row.html" %}
         {% endfor %}
       </tbody>
     </table>

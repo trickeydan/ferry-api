@@ -1,12 +1,17 @@
 from typing import Any
+from uuid import UUID
 
+from django import http
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import SuspiciousOperation
 from django.db import models
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView, ListView, View
 
+from ferry.core.http import HttpRequest
 from ferry.core.mixins import BreadcrumbsMixin
 from ferry.court.forms import ConsequenceCreateForm
 
@@ -51,3 +56,22 @@ class ConsequenceCreateView(LoginRequiredMixin, BreadcrumbsMixin, CreateView):
     def form_valid(self, form: ConsequenceCreateForm) -> HttpResponse:
         messages.info(self.request, "Successfully created consequence.")
         return super().form_valid(form)
+
+
+class DeactivateConsequenceView(LoginRequiredMixin, View):
+    def post(self, request: HttpRequest, pk: UUID) -> http.HttpResponse:
+        assert request.user.is_authenticated
+
+        if not request.htmx:
+            raise SuspiciousOperation("That request is not valid.")
+
+        qs = Consequence.objects.for_user(request.user)
+        # Apply additional filter for superusers.
+        qs = qs.filter(created_by=request.user.person)
+        qs = qs.annotate(victim_count=models.Count("ratifications"))
+
+        consequence = get_object_or_404(qs, id=pk)
+        consequence.is_enabled = False
+        consequence.save()
+
+        return render(request, "court/consequence_list__table_row.html", {"consequence": consequence})

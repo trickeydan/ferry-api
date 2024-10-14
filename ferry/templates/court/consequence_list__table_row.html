@@ -1,0 +1,21 @@
+<tr>
+    <th scope="row">{{ consequence.content }}</th>
+    <td>{% if consequence.is_enabled %}✅{% else %}❌{% endif %}</td>
+    <td>{{ consequence.victim_count }}</td>
+    <td>
+        {% if consequence.is_enabled %}
+            <button class="btn btn-sm btn-danger"
+                    hx-post="{% url 'court:consequence-deactivate' consequence.id %}"
+                    hx-trigger='confirmed'
+                    hx-target="closest tr"
+                    hx-swap='outerHTML'
+                    onClick="Swal.fire({title: 'Deactivate Consequence', text:'Are you sure you want to deactivate this consequence?'}).then((result)=>{
+                             if(result.isConfirmed){
+                             htmx.trigger(this, 'confirmed');
+                             }
+                             })">
+                Deactivate
+            </button>
+        {% endif %}
+    </td>
+</tr>
