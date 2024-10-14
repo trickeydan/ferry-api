@@ -52,6 +52,18 @@ class PubEventSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
+class PublicPubEventSerializer(serializers.ModelSerializer):
+    pub = PubSerializer()
+
+    class Meta:
+        model = PubEvent
+        fields = (
+            "id",
+            "timestamp",
+            "pub",
+        )
+
+
 class PubEventAddRemoveAttendeeSerializer(serializers.Serializer):
     person = serializers.PrimaryKeyRelatedField(queryset=Person.objects.all())
 

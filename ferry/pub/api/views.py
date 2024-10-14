@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, permissions, viewsets
@@ -11,6 +12,7 @@ from ferry.pub.api.serializers import (
     PubEventAddRemoveAttendeeSerializer,
     PubEventSerializer,
     PubEventTableSerializer,
+    PublicPubEventSerializer,
     PubSerializer,
 )
 from ferry.pub.models import Pub, PubEvent, PubEventQuerySet, PubEventRSVP, PubQuerySet, PubTable
@@ -149,3 +151,20 @@ class PubEventViewset(
 
         serializer = PubEventSerializer(instance=pub_event)
         return Response(serializer.data)
+
+    @extend_schema(
+        tags=["Pub - Next Pub"],
+        responses={200: PublicPubEventSerializer, 204: None},
+        description="Get the next pub event. This endpoint does not require authentication.",
+    )
+    @action(detail=False, methods=["GET"], permission_classes=[permissions.AllowAny])
+    def next(self, request: Request) -> Response:
+        now = timezone.now()
+        upcoming_pubs = PubEvent.objects.filter(timestamp__gte=now).order_by("timestamp")
+        next_pub = upcoming_pubs.first()
+
+        if next_pub:
+            serializer = PublicPubEventSerializer(instance=next_pub)
+            return Response(serializer.data)
+        else:
+            return Response(status=204)
