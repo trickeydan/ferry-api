@@ -87,6 +87,8 @@ class Person(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
     display_name = models.CharField(max_length=255, unique=True)
     discord_id = models.BigIntegerField(verbose_name="Discord ID", blank=True, null=True, unique=True)
+    autopub = models.BooleanField(default=False, verbose_name="AutoPub enabled")
+
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 

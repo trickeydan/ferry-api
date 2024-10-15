@@ -11,7 +11,7 @@ def get_attendees_for_pub_event(pub_event: PubEvent) -> PersonQuerySet:
 
 def annotate_attendee_count(pub_event_qs: PubEventQuerySet) -> PubEventQuerySet:
     sub_qs = (
-        PubEventRSVP.objects.filter(pub_event_id=models.OuterRef("id"))
+        PubEventRSVP.objects.filter(pub_event_id=models.OuterRef("id"), is_attending=True)
         .order_by()
         .annotate(count=models.Func(models.F("id"), function="Count"))
         .values("count")

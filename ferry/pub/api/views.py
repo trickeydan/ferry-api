@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from ferry.accounts.models import Person
 from ferry.pub.api.serializers import (
     PubEventAddRemoveAttendeeSerializer,
     PubEventSerializer,
@@ -80,6 +81,14 @@ class PubEventViewset(
     def get_queryset(self) -> PubEventQuerySet:
         assert self.request.user.is_authenticated
         return PubEvent.objects.for_user(self.request.user)
+
+    def perform_create(self, serializer: PubEventSerializer) -> None:
+        pub_event = serializer.save()
+        rsvps = [
+            PubEventRSVP(person=person, pub_event=pub_event, is_attending=True, method=PubEventRSVPMethod.AUTO)
+            for person in Person.objects.filter(autopub=True)
+        ]
+        PubEventRSVP.objects.bulk_create(rsvps)
 
     @extend_schema(
         tags=["Pub - Event Attendance"],
