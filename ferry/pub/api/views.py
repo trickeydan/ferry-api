@@ -14,7 +14,7 @@ from ferry.pub.api.serializers import (
     PublicPubEventSerializer,
     PubSerializer,
 )
-from ferry.pub.models import Pub, PubEvent, PubEventQuerySet, PubEventRSVP, PubQuerySet, PubTable
+from ferry.pub.models import Pub, PubEvent, PubEventQuerySet, PubEventRSVP, PubEventRSVPMethod, PubQuerySet, PubTable
 
 
 @extend_schema_view(
@@ -94,12 +94,12 @@ class PubEventViewset(
         attendee_info = PubEventAddRemoveAttendeeSerializer(data=request.data)
         attendee_info.is_valid(raise_exception=True)
 
-        rsvp, created = PubEventRSVP.objects.get_or_create(
-            pub_event=pub_event, person=attendee_info.validated_data["person"], defaults={"is_attending": True}
+        # Ensure the RSVP exists, if adding make method as discord.
+        PubEventRSVP.objects.get_or_create(
+            pub_event=pub_event,
+            person=attendee_info.validated_data["person"],
+            defaults={"is_attending": True, "method": PubEventRSVPMethod.DISCORD},
         )
-        if not created:
-            rsvp.is_attending = True
-            rsvp.save()
 
         serializer = PubEventSerializer(instance=pub_event)
         return Response(serializer.data)
@@ -117,13 +117,14 @@ class PubEventViewset(
         attendee_info = PubEventAddRemoveAttendeeSerializer(data=request.data)
         attendee_info.is_valid(raise_exception=True)
 
-        rsvp, created = PubEventRSVP.objects.get_or_create(
-            pub_event=pub_event, person=attendee_info.validated_data["person"], defaults={"is_attending": False}
+        # Delete any RSVPs using Discord for that event
+        rsvp_qs = PubEventRSVP.objects.filter(
+            pub_event=pub_event, person=attendee_info.validated_data["person"], method=PubEventRSVPMethod.DISCORD
         )
-        if not created:
-            rsvp.is_attending = False
-            rsvp.save()
+        rsvp_qs.delete()
 
+        # Note: the bot checks if the user is still present, i.e if they have opted in via
+        # another method
         serializer = PubEventSerializer(instance=pub_event)
         return Response(serializer.data)
 

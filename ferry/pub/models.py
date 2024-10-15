@@ -87,12 +87,19 @@ class PubEvent(models.Model):
         return f"Pub at {self.pub} on {self.timestamp.date()}"
 
 
+class PubEventRSVPMethod(models.TextChoices):
+    AUTO = "A", "AutoPub"
+    DISCORD = "D", "Discord"
+    WEB = "W", "Web"
+
+
 class PubEventRSVP(models.Model):
     id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
 
     person = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="pub_event_rsvps")
     pub_event = models.ForeignKey(PubEvent, on_delete=models.CASCADE, related_name="pub_event_rsvps")
     is_attending = models.BooleanField()  # Can be false for an opt-out.
+    method = models.CharField(max_length=1, choices=PubEventRSVPMethod)
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -100,6 +107,15 @@ class PubEventRSVP(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=("person", "pub_event"), name="one_rsvp_per_person_per_event"),
+            models.CheckConstraint(
+                check=(
+                    models.Q(method=PubEventRSVPMethod.AUTO, is_attending=True)
+                    | models.Q(method=PubEventRSVPMethod.DISCORD, is_attending=True)
+                    | models.Q(method=PubEventRSVPMethod.WEB, is_attending=True)
+                ),
+                name="correct_value_for_method",
+                violation_error_message="Invalid attendance value for RSVP method",
+            ),
         ]
 
     def __str__(self) -> str:

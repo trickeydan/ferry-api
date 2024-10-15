@@ -1,5 +1,8 @@
+from typing import Any
+
 from django import forms
 from django.contrib import admin
+from django.http import HttpRequest
 from emoji_picker.widgets import EmojiPickerTextInputAdmin
 
 from ferry.pub.models import Pub, PubEvent, PubEventRSVP, PubTable
@@ -29,10 +32,13 @@ class PubTableAdmin(admin.ModelAdmin):
 
 class PubEventRSVPAdmin(admin.StackedInline):
     model = PubEventRSVP
-    extra = 1
+    extra = 0
 
-    readonly_fields = ("id", "created_at", "updated_at")
-    fields = ("person", "is_attending", "id", "created_at", "updated_at")
+    readonly_fields = ("person", "is_attending", "method", "id", "created_at", "updated_at")
+    fields = ("person", "is_attending", "method", "id", "created_at", "updated_at")
+
+    def has_add_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return False
 
 
 class PubEventAdmin(admin.ModelAdmin):
