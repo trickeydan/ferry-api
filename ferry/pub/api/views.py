@@ -82,7 +82,7 @@ class PubEventViewset(
         assert self.request.user.is_authenticated
         return PubEvent.objects.for_user(self.request.user)
 
-    def perform_create(self, serializer: PubEventSerializer) -> None:
+    def perform_create(self, serializer: PubEventSerializer) -> None:  # type: ignore[override]
         pub_event = serializer.save()
         rsvps = [
             PubEventRSVP(person=person, pub_event=pub_event, is_attending=True, method=PubEventRSVPMethod.AUTO)
