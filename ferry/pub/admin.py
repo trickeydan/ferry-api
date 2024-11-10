@@ -34,7 +34,7 @@ class PubEventRSVPAdmin(admin.StackedInline):
     model = PubEventRSVP
     extra = 0
 
-    readonly_fields = ("person", "is_attending", "method", "id", "created_at", "updated_at")
+    readonly_fields = ("person", "id", "created_at", "updated_at")
     fields = ("person", "is_attending", "method", "id", "created_at", "updated_at")
 
     def has_add_permission(self, request: HttpRequest, obj: Any = None) -> bool:
