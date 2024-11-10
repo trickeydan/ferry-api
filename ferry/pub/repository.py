@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 
 from ferry.accounts.models import Person, PersonQuerySet
 from ferry.pub.models import PubEvent, PubEventQuerySet, PubEventRSVP
@@ -6,7 +7,7 @@ from ferry.pub.models import PubEvent, PubEventQuerySet, PubEventRSVP
 
 def get_attendees_for_pub_event(pub_event: PubEvent) -> PersonQuerySet:
     person_ids = pub_event.pub_event_rsvps.filter(is_attending=True).values("person")
-    return Person.objects.filter(id__in=person_ids)
+    return Person.objects.filter(id__in=person_ids).order_by(Lower("display_name"))
 
 
 def annotate_attendee_count(pub_event_qs: PubEventQuerySet) -> PubEventQuerySet:
