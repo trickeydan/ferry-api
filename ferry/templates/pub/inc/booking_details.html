@@ -1,0 +1,15 @@
+<div class="card mt-2">
+  <div class="card-body">
+    <h5 class="card-title">Booking</h5>
+    {% if booking %}
+      <p>A table has been booked by {{ booking.created_by }} booked for <strong>{{ booking.table_size }}</strong> people.</p>
+      <p>However, there is likely to be more space if needed, so please do not be put off coming if you are late responding to the event.</p>
+    {% else %}
+      {% if event.is_past %}
+        <p>No booking information available for this event.</p>
+      {% else %}
+        <p>This event has not been booked with the venue yet.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>

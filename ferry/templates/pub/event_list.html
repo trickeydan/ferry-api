@@ -7,7 +7,7 @@
 {% block content %}
   <h2 class="mb-2">Next Pub</h2>
   {% if upcoming_pub %}
-    {% include "pub/inc/event_details.html" with event=upcoming_pub attendees=attendees rsvp=upcoming_pub_rsvp is_past=False %}
+    {% include "pub/inc/event_details.html" with event=upcoming_pub booking=upcoming_pub_booking attendees=attendees rsvp=upcoming_pub_rsvp is_past=False %}
   {% else %}
     <p>The location of the next pub has not yet been decided. Please use <code>/pub next</code> in Discord.</p>
   {% endif %}

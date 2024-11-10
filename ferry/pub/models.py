@@ -89,6 +89,10 @@ class PubEvent(models.Model):
     def __str__(self) -> str:
         return f"Pub at {self.pub} on {self.timestamp.date()}"
 
+    @property
+    def is_past(self) -> bool:
+        return timezone.now().date() > self.timestamp.date()
+
 
 class PubEventRSVPMethod(models.TextChoices):
     AUTO = "A", "AutoPub"
@@ -126,3 +130,17 @@ class PubEventRSVP(models.Model):
             return f"{self.person} is attending {self.pub_event}"
         else:
             return f"{self.person} is not attending {self.pub_event}"
+
+
+class PubEventBooking(models.Model):
+    id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
+    pub_event = models.OneToOneField(PubEvent, on_delete=models.CASCADE, related_name="booking")
+
+    table_size = models.PositiveSmallIntegerField(verbose_name="Table size")
+
+    created_by = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self) -> str:
+        return f"Booking made for {self.pub_event}"

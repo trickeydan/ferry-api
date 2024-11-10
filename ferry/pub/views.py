@@ -13,7 +13,7 @@ from django.views.generic import DetailView, ListView
 
 from ferry.core.http import HttpRequest
 from ferry.core.mixins import BreadcrumbsMixin
-from ferry.pub.models import PubEvent, PubEventQuerySet, PubEventRSVP, PubEventRSVPMethod
+from ferry.pub.models import PubEvent, PubEventBooking, PubEventQuerySet, PubEventRSVP, PubEventRSVPMethod
 from ferry.pub.repository import annotate_attendee_count, get_attendees_for_pub_event
 
 
@@ -37,12 +37,19 @@ class PubEventListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
             upcoming_pub_rsvp = PubEventRSVP.objects.filter(
                 pub_event=upcoming_pub, person=self.request.user.person
             ).first()
+
+            try:
+                booking: PubEventBooking | None = upcoming_pub.booking
+            except PubEventBooking.DoesNotExist:
+                booking = None
         else:
             upcoming_pub_rsvp = None
+            booking = None
 
         return super().get_context_data(
             upcoming_pub=upcoming_pub,
             upcoming_pub_rsvp=upcoming_pub_rsvp,
+            upcoming_pub_booking=booking,
             attendees=get_attendees_for_pub_event(upcoming_pub) if upcoming_pub else None,
             **kwargs,
         )
@@ -60,7 +67,7 @@ class PubEventDetailView(LoginRequiredMixin, BreadcrumbsMixin, DetailView):
 
     def get_queryset(self) -> PubEventQuerySet:
         assert self.request.user.is_authenticated
-        qs = PubEvent.objects.for_user(self.request.user)
+        qs = PubEvent.objects.for_user(self.request.user).select_related("booking")
         qs = annotate_attendee_count(qs)
         return qs
 
@@ -68,10 +75,16 @@ class PubEventDetailView(LoginRequiredMixin, BreadcrumbsMixin, DetailView):
         assert self.request.user.is_authenticated
         assert self.request.user.person
 
+        try:  # TODO: Dedupe
+            booking: PubEventBooking | None = self.object.booking
+        except PubEventBooking.DoesNotExist:
+            booking = None
+
         rsvp = PubEventRSVP.objects.filter(pub_event=self.object, person=self.request.user.person).first()
         return super().get_context_data(
             attendees=get_attendees_for_pub_event(self.object),
             rsvp=rsvp,
+            booking=booking,
             is_past=timezone.now().date() > self.object.timestamp.date(),
             **kwargs,
         )
@@ -86,13 +99,12 @@ class UpdatePubEventResponseView(LoginRequiredMixin, View):
             raise SuspiciousOperation("That request is not valid.")
 
         pub_event = get_object_or_404(PubEvent.objects.for_user(request.user), id=pk)
-        is_past = timezone.now().date() > pub_event.timestamp.date()
         rsvp = PubEventRSVP.objects.filter(
             pub_event=pub_event,
             person=request.user.person,
         ).first()
 
-        if not is_past:
+        if not pub_event.is_past:
             if rsvp:
                 if rsvp.method == PubEventRSVPMethod.AUTO:
                     with transaction.atomic():
@@ -122,13 +134,18 @@ class UpdatePubEventResponseView(LoginRequiredMixin, View):
                 )
                 rsvp.save()
 
+        try:  # TODO: Dedupe
+            booking: PubEventBooking | None = pub_event.booking
+        except PubEventBooking.DoesNotExist:
+            booking = None
+
         return render(
             request,
             "pub/inc/event_details.html",
             {
                 "event": pub_event,
                 "rsvp": rsvp,
+                "booking": booking,
                 "attendees": get_attendees_for_pub_event(pub_event),
-                "is_past": is_past,
             },
         )

@@ -21,13 +21,14 @@
           </dl>
         </div>
       </div>
+      {% include "pub/inc/booking_details.html" with booking=booking %}
       <div class="card mt-2">
         <div class="card-body">
           <h5 class="card-title">Attendance</h5>
           {% if rsvp %}
             {% if rsvp.method == "A" %}
               <p>You have automatically said yes using AutoPub.</p>
-              {% if not is_past %}
+              {% if not event.is_past %}
                 <button class="btn btn-sm btn-danger"
                         hx-post="{% url 'pub:events-update-response' event.id %}"
                         hx-target="closest .event-details"
@@ -42,7 +43,7 @@
             {% elif rsvp.method == "W" %}
               {% if rsvp.is_attending %}
                 <p>You said yes to this pub via this web interface.</p>
-                {% if not is_past %}
+                {% if not event.is_past %}
                   <button class="btn btn-sm btn-danger"
                           hx-post="{% url 'pub:events-update-response' event.id %}"
                           hx-target="closest .event-details"
@@ -54,7 +55,7 @@
               {% else %}
                 <p>You said no to this pub via this web interface. </p>
                 <p>That usually means you opted-out of AutoPub.</p>
-                {% if not is_past %}
+                {% if not event.is_past %}
                   <button class="btn btn-sm btn-success"
                           hx-post="{% url 'pub:events-update-response' event.id %}"
                           hx-target="closest .event-details"
@@ -66,7 +67,7 @@
               {% endif %}
             {% endif %}
           {% else %}
-            {% if is_past %}
+            {% if event.is_past %}
               <p>You did not respond to this pub.</p>
             {% else %}
               <p>You have not responded to this pub yet.</p>

@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.http import HttpRequest
 from emoji_picker.widgets import EmojiPickerTextInputAdmin
 
-from ferry.pub.models import Pub, PubEvent, PubEventRSVP, PubTable
+from ferry.pub.models import Pub, PubEvent, PubEventBooking, PubEventRSVP, PubTable
 
 
 class PubAdminForm(forms.ModelForm):
@@ -41,11 +41,21 @@ class PubEventRSVPAdmin(admin.StackedInline):
         return False
 
 
+class PubEventBookingAdmin(admin.StackedInline):
+    model = PubEventBooking
+
+    readonly_fields = ("id", "created_at", "updated_at")
+    fields = ("table_size", "id", "created_by", "created_at", "updated_at")
+
+
 class PubEventAdmin(admin.ModelAdmin):
     readonly_fields = ("id", "discord_id", "created_at", "updated_at")
     fields = ("id", "timestamp", "discord_id", "pub", "table", "created_by", "created_at", "updated_at")
     list_display = ("timestamp", "pub")
-    inlines = (PubEventRSVPAdmin,)
+    inlines = (
+        PubEventBookingAdmin,
+        PubEventRSVPAdmin,
+    )
 
 
 admin.site.register(Pub, PubAdmin)

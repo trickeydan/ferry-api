@@ -5,5 +5,5 @@
 {% block page_title %}{{ object }}{% endblock %}
 
 {% block content %}
-  {% include "pub/inc/event_details.html" with event=object attendees=attendees rsvp=rsvp is_past=is_past %}
+  {% include "pub/inc/event_details.html" with event=object attendees=attendees booking=booking rsvp=rsvp is_past=is_past %}
 {% endblock %}
