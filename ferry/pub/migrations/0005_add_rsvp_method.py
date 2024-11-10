@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 condition=models.Q(  # type: ignore
                     models.Q(("is_attending", True), ("method", "A")),
                     models.Q(("is_attending", True), ("method", "D")),
-                    models.Q(("method", "W")),
+                    ("method", "W"),
                     _connector="OR",
                 ),
                 name="correct_value_for_method",
