@@ -6,6 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("accounts", "0005_move_person_table"),
+        ("court", "0004_move_person_table"),
     ]
 
     operations = [
