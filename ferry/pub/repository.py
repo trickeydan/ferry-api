@@ -1,7 +1,10 @@
+from typing import Any
+
 from django.db import models
 from django.db.models.functions import Lower
 
 from ferry.accounts.models import Person, PersonQuerySet
+from ferry.pub.forms import PubEventBookingForm
 from ferry.pub.models import PubEvent, PubEventQuerySet, PubEventRSVP
 
 
@@ -18,3 +21,7 @@ def annotate_attendee_count(pub_event_qs: PubEventQuerySet) -> PubEventQuerySet:
         .values("count")
     )
     return pub_event_qs.annotate(attendee_count=models.Subquery(sub_qs, output_field=models.IntegerField()))
+
+
+def get_pub_booking_form(pub_event: PubEvent, *, data: Any | None = None) -> PubEventBookingForm:
+    return PubEventBookingForm(data=data, pub_event=pub_event)

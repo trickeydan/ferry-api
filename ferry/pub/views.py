@@ -2,10 +2,11 @@ from typing import Any
 from uuid import UUID
 
 from django import http
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import SuspiciousOperation
 from django.db import transaction
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
@@ -14,7 +15,7 @@ from django.views.generic import DetailView, ListView
 from ferry.core.http import HttpRequest
 from ferry.core.mixins import BreadcrumbsMixin
 from ferry.pub.models import PubEvent, PubEventBooking, PubEventQuerySet, PubEventRSVP, PubEventRSVPMethod
-from ferry.pub.repository import annotate_attendee_count, get_attendees_for_pub_event
+from ferry.pub.repository import annotate_attendee_count, get_attendees_for_pub_event, get_pub_booking_form
 
 
 class PubEventListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
@@ -50,6 +51,7 @@ class PubEventListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
             upcoming_pub=upcoming_pub,
             upcoming_pub_rsvp=upcoming_pub_rsvp,
             upcoming_pub_booking=booking,
+            upcoming_pub_booking_form=get_pub_booking_form(upcoming_pub) if upcoming_pub else None,
             attendees=get_attendees_for_pub_event(upcoming_pub) if upcoming_pub else None,
             **kwargs,
         )
@@ -86,8 +88,36 @@ class PubEventDetailView(LoginRequiredMixin, BreadcrumbsMixin, DetailView):
             rsvp=rsvp,
             booking=booking,
             is_past=timezone.now().date() > self.object.timestamp.date(),
+            booking_form=get_pub_booking_form(self.object),
             **kwargs,
         )
+
+
+class AddPubEventBookingView(LoginRequiredMixin, View):
+    def post(self, request: HttpRequest, pk: UUID) -> http.HttpResponse:
+        assert request.user.is_authenticated
+        assert request.user.person
+
+        pub_event = get_object_or_404(PubEvent.objects.for_user(request.user), id=pk)
+
+        try:
+            _ = pub_event.booking
+            messages.error(request, "A booking already exists for that event.")
+            return redirect("pub:events-detail", pk=pk)
+        except PubEventBooking.DoesNotExist:
+            pass
+
+        form = get_pub_booking_form(pub_event, data=request.POST)
+
+        if form.is_valid():
+            messages.success(request, "Added booking. Thanks!")
+            PubEventBooking.objects.create(
+                pub_event=pub_event, created_by=request.user.person, table_size=form.cleaned_data["table_size"]
+            )
+        else:
+            messages.error(request, "Something was wrong with your booking info.")
+
+        return redirect("pub:events-detail", pk=pk)
 
 
 class UpdatePubEventResponseView(LoginRequiredMixin, View):
@@ -147,5 +177,6 @@ class UpdatePubEventResponseView(LoginRequiredMixin, View):
                 "rsvp": rsvp,
                 "booking": booking,
                 "attendees": get_attendees_for_pub_event(pub_event),
+                "booking_form": get_pub_booking_form(pub_event),
             },
         )

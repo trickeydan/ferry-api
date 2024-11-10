@@ -1,3 +1,4 @@
+{% load crispy_forms_tags %}
 <div class="card mt-2">
   <div class="card-body">
     <h5 class="card-title">Booking</h5>
@@ -9,6 +10,7 @@
         <p>No booking information available for this event.</p>
       {% else %}
         <p>This event has not been booked with the venue yet.</p>
+        {% crispy form %}
       {% endif %}
     {% endif %}
   </div>
