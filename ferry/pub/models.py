@@ -84,7 +84,7 @@ class PubEvent(models.Model):
     # TODO: validate table is at pub
 
     class Meta:
-        ordering = ('-timestamp', )
+        ordering = ("-timestamp",)
 
     def __str__(self) -> str:
         return f"Pub at {self.pub} on {self.timestamp.date()}"

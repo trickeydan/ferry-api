@@ -53,6 +53,7 @@ class PubEventSerializer(serializers.ModelSerializer):
 
 class PublicPubEventSerializer(serializers.ModelSerializer):
     pub = PubSerializer()
+    attendee_count = serializers.SerializerMethodField("get_attendee_count")
 
     class Meta:
         model = PubEvent
@@ -60,7 +61,11 @@ class PublicPubEventSerializer(serializers.ModelSerializer):
             "id",
             "timestamp",
             "pub",
+            "attendee_count",
         )
+
+    def get_attendee_count(self, event: PubEvent) -> int:
+        return get_attendees_for_pub_event(event).count()
 
 
 class PubEventAddRemoveAttendeeSerializer(serializers.Serializer):
