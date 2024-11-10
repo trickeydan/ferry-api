@@ -111,7 +111,7 @@ class PubEventRSVP(models.Model):
                 check=(
                     models.Q(method=PubEventRSVPMethod.AUTO, is_attending=True)
                     | models.Q(method=PubEventRSVPMethod.DISCORD, is_attending=True)
-                    | models.Q(method=PubEventRSVPMethod.WEB, is_attending=True)
+                    | models.Q(method=PubEventRSVPMethod.WEB)
                 ),
                 name="correct_value_for_method",
                 violation_error_message="Invalid attendance value for RSVP method",
