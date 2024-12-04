@@ -45,8 +45,7 @@ class PersonSerializer(serializers.ModelSerializer[Person]):
     def get_ferry_sequence(self, person: Person) -> str:
         if not hasattr(person, "current_score"):
             return ""
-        fmt = self.context.get("ferry_format", "emoji")
-        return ferrify(math.ceil(person.current_score), seed=person.id.int, fmt=fmt)
+        return ferrify(math.ceil(person.current_score), seed=person.id.int)
 
 
 class UserSerializer(serializers.ModelSerializer[User]):
