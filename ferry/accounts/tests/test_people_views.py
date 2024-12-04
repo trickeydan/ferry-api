@@ -10,6 +10,7 @@ from django.urls import reverse_lazy
 
 from ferry.accounts.factories import PersonFactory
 from ferry.accounts.models import Person, User
+from ferry.accounts.repository import ferrify
 from ferry.conftest import APITest
 from ferry.core.discord import NoSuchGuildMemberError
 from ferry.court.factories import AccusationFactory
@@ -195,10 +196,11 @@ class TestPeopleCreateEndpoint(APITest):
         # Assert
         assert resp.status_code == HTTPStatus.CREATED
         data = resp.json()
-        assert data.keys() == {"id", "display_name", "discord_id", "created_at", "updated_at"}
+        assert data.keys() == {"id", "display_name", "discord_id", "ferry_sequence", "created_at", "updated_at"}
         assert data["id"]
         assert data["display_name"] == expected_display_name
         assert data["discord_id"] == expected_discord_id
+        assert data["ferry_sequence"] == ""
 
         person = Person.objects.get(id=data["id"])
         assert person.display_name == expected_display_name
@@ -251,11 +253,20 @@ class TestPeopleDetailEndpoint(APITest):
         # Assert
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
-        assert data.keys() == {"id", "display_name", "discord_id", "current_score", "created_at", "updated_at"}
+        assert data.keys() == {
+            "id",
+            "display_name",
+            "discord_id",
+            "current_score",
+            "ferry_sequence",
+            "created_at",
+            "updated_at",
+        }
         assert data["id"] == str(person.id)
         assert data["display_name"] == person.display_name
         assert data["discord_id"] == person.discord_id
         assert data["current_score"] == "0.00"
+        assert data["ferry_sequence"] == ""
 
     def test_get_with_score(self, client: Client, admin_user: User) -> None:
         # Arrange
@@ -268,11 +279,20 @@ class TestPeopleDetailEndpoint(APITest):
         # Assert
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
-        assert data.keys() == {"id", "display_name", "discord_id", "current_score", "created_at", "updated_at"}
+        assert data.keys() == {
+            "id",
+            "display_name",
+            "discord_id",
+            "current_score",
+            "ferry_sequence",
+            "created_at",
+            "updated_at",
+        }
         assert data["id"] == str(person.id)
         assert data["display_name"] == person.display_name
         assert data["discord_id"] == person.discord_id
         assert data["current_score"] == "15.00"
+        assert data["ferry_sequence"] == ferrify(15, seed=person.id.int)
 
 
 @pytest.mark.django_db
@@ -370,7 +390,15 @@ class TestPeopleUpdateEndpoint(APITest):
         # Assert
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
-        assert data.keys() == {"id", "display_name", "discord_id", "current_score", "created_at", "updated_at"}
+        assert data.keys() == {
+            "id",
+            "display_name",
+            "discord_id",
+            "current_score",
+            "ferry_sequence",
+            "created_at",
+            "updated_at",
+        }
         assert data["id"] == str(person.id)
         assert data["display_name"] == expected_display_name
         assert data["discord_id"] == expected_discord_id

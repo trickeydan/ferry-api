@@ -4,10 +4,11 @@ from typing import Any
 from django.core.signing import TimestampSigner
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import exceptions, filters, permissions, serializers, viewsets
+from rest_framework import exceptions, filters, permissions, renderers, serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 
 from ferry.accounts.models import Person, PersonQuerySet, User
 
@@ -54,6 +55,11 @@ class PeopleObjectPermission(permissions.BasePermission):
         return False
 
 
+class DiscordJSONRenderer(renderers.JSONRenderer):
+    media_type = "application/json; format=discord"
+    ferry_format = "discord"
+
+
 @extend_schema_view(
     list=extend_schema(tags=["People"]),
     retrieve=extend_schema(tags=["People"]),
@@ -66,8 +72,15 @@ class PersonViewset(viewsets.ModelViewSet):
     serializer_class = PersonSerializer
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     permission_classes = [permissions.IsAuthenticated, PeopleObjectPermission]
+    renderer_classes = [DiscordJSONRenderer] + api_settings.DEFAULT_RENDERER_CLASSES  # type: ignore
     ordering_fields = ("display_name", "current_score", "created_at", "updated_at")
     filterset_fields = ("discord_id",)
+
+    def get_serializer_context(self) -> dict[str, Any]:
+        return {
+            **super().get_serializer_context(),
+            "ferry_format": getattr(self.request.accepted_renderer, "ferry_format", "emoji"),
+        }
 
     def get_queryset(self) -> PersonQuerySet:
         assert self.request.user.is_authenticated
