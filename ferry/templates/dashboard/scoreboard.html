@@ -10,18 +10,20 @@
       <tr>
         <th scope="col">#</th>
         <th scope="col">Person</th>
+        <th scope="col" class="d-none d-md-table-cell">Ferry</th>
         <th scope="col">Current Score</th>
-        <th scope="col">Times Accused</th>
+        <th scope="col" class="d-none d-sm-table-cell">Times Accused</th>
         <th scope="col"></th>
       </tr>
     </thead>
     <tbody>
       {% for person in object_list %}
-        <tr>
+        <tr class="align-middle">
           <th scope="row">{{ person.rank }}</th>
           <td><a href="{% url 'accounts:person-detail' person.id %}">{{ person.display_name }}</a></td>
+          <td class="d-none d-md-table-cell h4">{{ person.ferry_sequence }}</td>
           <td>{{ person.current_score|floatformat:2 }}</td>
-          <td>{{ person.num_ratified_accusations }}</td>
+          <td class="d-none d-sm-table-cell">{{ person.num_ratified_accusations }}</td>
           <td><a href="{% url 'accounts:person-detail' person.id %}">View</a></td>
         </tr>
       {% endfor %}

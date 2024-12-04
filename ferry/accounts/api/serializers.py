@@ -1,10 +1,7 @@
-import math
-
 from django.conf import settings
 from rest_framework import serializers
 
 from ferry.accounts.models import Person, User
-from ferry.accounts.repository import ferrify
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 
 
@@ -43,9 +40,10 @@ class PersonSerializer(serializers.ModelSerializer[Person]):
         return value
 
     def get_ferry_sequence(self, person: Person) -> str:
-        if not hasattr(person, "current_score"):
+        try:
+            return person.ferry_sequence
+        except ValueError:
             return ""
-        return ferrify(math.ceil(person.current_score), seed=person.id.int)
 
 
 class UserSerializer(serializers.ModelSerializer[User]):

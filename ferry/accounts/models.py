@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import secrets
 import uuid
 from collections.abc import Collection
@@ -11,6 +12,7 @@ from django.db import models
 from django.db.models import F, Func, Value
 from django.db.models.functions import Coalesce
 
+from ferry.accounts.repository import ferrify
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 from ferry.court.models import SCORE_FIELD, Ratification
 
@@ -110,3 +112,9 @@ class Person(models.Model):
                 discord_client.get_guild_member_by_id(settings.DISCORD_GUILD, self.discord_id)
             except NoSuchGuildMemberError:
                 raise ValidationError("Unknown discord ID. Is the user part of the guild?") from None
+
+    @property
+    def ferry_sequence(self) -> str:
+        if not hasattr(self, "current_score"):
+            raise ValueError("current_score is not annotated.")
+        return ferrify(math.ceil(self.current_score), seed=self.id.int)
