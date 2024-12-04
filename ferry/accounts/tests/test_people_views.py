@@ -124,7 +124,7 @@ class TestPeopleCreateEndpoint(APITest):
             ),
         ],
     )
-    @patch("ferry.court.api.serializers.get_discord_client")
+    @patch("ferry.accounts.api.serializers.get_discord_client")
     def test_post_bad_payload(
         self,
         mock_get_discord_client: Mock,
@@ -170,7 +170,7 @@ class TestPeopleCreateEndpoint(APITest):
             pytest.param({"display_name": "wasps", "discord_id": 9876543210}, "wasps", 9876543210, id="update-both"),
         ],
     )
-    @patch("ferry.court.api.serializers.get_discord_client")
+    @patch("ferry.accounts.api.serializers.get_discord_client")
     def test_post(
         self,
         mock_get_discord_client: Mock,
@@ -204,7 +204,7 @@ class TestPeopleCreateEndpoint(APITest):
         assert person.display_name == expected_display_name
         assert person.discord_id == expected_discord_id
 
-    @patch("ferry.court.api.serializers.get_discord_client")
+    @patch("ferry.accounts.api.serializers.get_discord_client")
     def test_post_no_such_discord_user(
         self,
         mock_get_discord_client: Mock,
@@ -325,7 +325,7 @@ class TestPeopleUpdateEndpoint(APITest):
             ),
         ],
     )
-    @patch("ferry.court.api.serializers.get_discord_client")
+    @patch("ferry.accounts.api.serializers.get_discord_client")
     def test_put_bad_payload(
         self,
         mock_get_discord_client: Mock,
@@ -387,7 +387,7 @@ class TestPeopleUpdateEndpoint(APITest):
             pytest.param({"display_name": "wasps", "discord_id": 9876543210}, "wasps", 9876543210, id="update-both"),
         ],
     )
-    @patch("ferry.court.api.serializers.get_discord_client")
+    @patch("ferry.accounts.api.serializers.get_discord_client")
     def test_put_admin(
         self,
         mock_get_discord_client: Mock,
@@ -403,7 +403,7 @@ class TestPeopleUpdateEndpoint(APITest):
 
         self._test_put(client, admin_user, person, payload, expected_display_name, expected_discord_id)
 
-    @patch("ferry.court.api.serializers.get_discord_client")
+    @patch("ferry.accounts.api.serializers.get_discord_client")
     def test_put(
         self,
         mock_get_discord_client: Mock,
@@ -428,7 +428,7 @@ class TestPeopleUpdateEndpoint(APITest):
             expected_discord_id=9876543210,
         )
 
-    @patch("ferry.court.api.serializers.get_discord_client")
+    @patch("ferry.accounts.api.serializers.get_discord_client")
     def test_put_no_such_discord_user(
         self,
         mock_get_discord_client: Mock,
@@ -474,7 +474,7 @@ class TestPeopleUpdateEndpoint(APITest):
             "detail": "You do not have permission to perform this action.",
         }
 
-    @patch("ferry.court.api.serializers.get_discord_client")
+    @patch("ferry.accounts.api.serializers.get_discord_client")
     def test_put_cannot_edit_discord_id(
         self,
         mock_get_discord_client: Mock,

@@ -1,7 +1,7 @@
 from rest_framework import routers
 
-from ferry.accounts.api import UserViewset
-from ferry.court.api.views import AccusationViewset, ConsequenceViewset, PersonViewset
+from ferry.accounts.api.views import PersonViewset, UserViewset
+from ferry.court.api.views import AccusationViewset, ConsequenceViewset
 from ferry.pub.api.views import PubEventViewset, PubViewset
 
 router = routers.SimpleRouter()

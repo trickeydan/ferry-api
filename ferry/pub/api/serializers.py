@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
 
+from ferry.accounts.api.serializers import PersonLinkWithDiscordIdSerializer
 from ferry.accounts.models import Person
-from ferry.court.api.serializers import PersonLinkWithDiscordIdSerializer
 from ferry.pub.models import Pub, PubEvent, PubTable
 from ferry.pub.repository import get_attendees_for_pub_event
 
