@@ -24,7 +24,8 @@
 
         <ul class="navbar-nav mb-2 mb-md-0">
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a href="#" class="btn btn-link nav-link py-2 px-0 px-lg-2 dropdown-toggle d-flex align-items-center" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi-person-circle my-1 me-2"></i>
               {{ request.user.display_name }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
@@ -43,6 +44,8 @@
               </li>
             </ul>
           </li>
+
+          {% include "inc/nav-theme-switcher.html" %}
         </ul>
       {% endif %}
     </div>
