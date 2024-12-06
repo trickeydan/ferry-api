@@ -62,10 +62,14 @@ class UserPersonLinkForm(forms.Form):
 class PersonProfileForm(forms.ModelForm):
     class Meta:
         model = Person
-        fields = ("display_name",)
+        fields = ("display_name", "autopub")
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+
+        self.fields[
+            "autopub"
+        ].help_text = "AutoPub will automatically mark you as attending when a pub event is created."
 
         self.helper = FormHelper()
         self.helper.add_input(Submit("submit", "Save"))
