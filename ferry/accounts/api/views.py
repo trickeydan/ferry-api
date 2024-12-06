@@ -67,7 +67,7 @@ class PersonViewset(viewsets.ModelViewSet):
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     permission_classes = [permissions.IsAuthenticated, PeopleObjectPermission]
     ordering_fields = ("display_name", "current_score", "created_at", "updated_at")
-    filterset_fields = ("discord_id",)
+    filterset_fields = ("discord_id", "autopub")
 
     def get_queryset(self) -> PersonQuerySet:
         assert self.request.user.is_authenticated

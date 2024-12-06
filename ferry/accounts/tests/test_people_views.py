@@ -164,11 +164,12 @@ class TestPeopleCreateEndpoint(APITest):
         }
 
     @pytest.mark.parametrize(
-        ("payload", "expected_display_name", "expected_discord_id"),
+        ("payload", "expected_display_name", "expected_discord_id", "expected_autopub"),
         [
-            pytest.param({"display_name": "bees"}, "bees", None, id="missing-discord"),
-            pytest.param({"display_name": "bees", "discord_id": None}, "bees", None, id="no-discord"),
-            pytest.param({"display_name": "wasps", "discord_id": 9876543210}, "wasps", 9876543210, id="update-both"),
+            pytest.param({"display_name": "bees"}, "bees", None, False, id="missing-discord"),
+            pytest.param({"display_name": "bees", "discord_id": None}, "bees", None, False, id="no-discord"),
+            pytest.param({"display_name": "bees", "autopub": True}, "bees", None, True, id="autopub"),
+            pytest.param({"display_name": "wasps", "discord_id": 9876543210}, "wasps", 9876543210, False, id="update-both"),
         ],
     )
     @patch("ferry.accounts.api.serializers.get_discord_client")
@@ -180,6 +181,7 @@ class TestPeopleCreateEndpoint(APITest):
         payload: dict,
         expected_display_name: str | None,
         expected_discord_id: int | None,
+        expected_autopub: bool,
     ) -> None:
         # Arrange
         mock_get_guild_member_by_id = mock_get_discord_client.return_value.get_guild_member_by_id
@@ -196,11 +198,12 @@ class TestPeopleCreateEndpoint(APITest):
         # Assert
         assert resp.status_code == HTTPStatus.CREATED
         data = resp.json()
-        assert data.keys() == {"id", "display_name", "discord_id", "ferry_sequence", "created_at", "updated_at"}
+        assert data.keys() == {"id", "display_name", "discord_id", "ferry_sequence", "autopub", "created_at", "updated_at"}
         assert data["id"]
         assert data["display_name"] == expected_display_name
         assert data["discord_id"] == expected_discord_id
         assert data["ferry_sequence"] == ""
+        assert data["autopub"] is expected_autopub
 
         person = Person.objects.get(id=data["id"])
         assert person.display_name == expected_display_name
@@ -258,6 +261,7 @@ class TestPeopleDetailEndpoint(APITest):
             "display_name",
             "discord_id",
             "current_score",
+            "autopub",
             "ferry_sequence",
             "created_at",
             "updated_at",
@@ -284,6 +288,7 @@ class TestPeopleDetailEndpoint(APITest):
             "display_name",
             "discord_id",
             "current_score",
+            "autopub",
             "ferry_sequence",
             "created_at",
             "updated_at",
@@ -378,6 +383,8 @@ class TestPeopleUpdateEndpoint(APITest):
         payload: dict,
         expected_display_name: str | None,
         expected_discord_id: int | None,
+        *,
+        expected_autopub: bool = False,
     ) -> None:
         # Act
         resp = client.put(
@@ -396,12 +403,14 @@ class TestPeopleUpdateEndpoint(APITest):
             "discord_id",
             "current_score",
             "ferry_sequence",
+            "autopub",
             "created_at",
             "updated_at",
         }
         assert data["id"] == str(person.id)
         assert data["display_name"] == expected_display_name
         assert data["discord_id"] == expected_discord_id
+        assert data["autopub"] is expected_autopub
 
         person.refresh_from_db()
         assert person.display_name == expected_display_name
@@ -451,9 +460,10 @@ class TestPeopleUpdateEndpoint(APITest):
             client,
             user_with_person,
             user_with_person.person,
-            payload={"display_name": "wasps", "discord_id": 9876543210},
+            payload={"display_name": "wasps", "autopub": True, "discord_id": 9876543210},
             expected_display_name="wasps",
             expected_discord_id=9876543210,
+            expected_autopub=True,
         )
 
     @patch("ferry.accounts.api.serializers.get_discord_client")

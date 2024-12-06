@@ -23,12 +23,22 @@ class PersonLinkWithDiscordIdSerializer(serializers.ModelSerializer[Person]):
 
 class PersonSerializer(serializers.ModelSerializer[Person]):
     discord_id = serializers.IntegerField(allow_null=True, required=False)
+    autopub = serializers.BooleanField(required=False)
     current_score = serializers.DecimalField(max_digits=6, decimal_places=2, read_only=True)
     ferry_sequence = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Person
-        fields = ("id", "display_name", "discord_id", "current_score", "ferry_sequence", "created_at", "updated_at")
+        fields = (
+            "id",
+            "display_name",
+            "discord_id",
+            "current_score",
+            "autopub",
+            "ferry_sequence",
+            "created_at",
+            "updated_at",
+        )
 
     def validate_discord_id(self, value: int | None) -> int | None:
         if value:
