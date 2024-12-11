@@ -19,6 +19,23 @@ RUN touch README.md
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --without dev --no-root
 
+# New stage for building assets
+FROM node:20-slim as asset-builder
+
+WORKDIR /app
+RUN mkdir -p /app/assets /app/ferry/static
+
+COPY package.json package-lock.json vite.config.ts tsconfig.json ./
+COPY assets /app/assets/
+
+# Install dependencies for asset building
+RUN npm install
+
+WORKDIR /app/
+
+# Build assets
+RUN ls /app && npm run build
+
 FROM python:${PYTHON_VERSION} as runtime
 
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -28,7 +45,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
-# Install system packages required by Wagtail and wagtail.
 RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-recommends \
     build-essential \
     libpq-dev \
@@ -51,6 +67,7 @@ RUN mkdir /app/media
 RUN chown ferry:ferry /app/media
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+COPY --from=asset-builder /app/ferry/static/ /app/static/
 
 COPY --chown=ferry:ferry ferry /app/ferry
 COPY --chown=ferry:ferry manage.py /app/manage.py

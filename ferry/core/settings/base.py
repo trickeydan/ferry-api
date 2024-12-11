@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     "django_filters",
     "django_htmx",
+    'django_vite',
     "emoji_picker",
     "rules",
     "django.contrib.admin",
@@ -71,7 +72,7 @@ TEMPLATES = [
     },
 ]
 
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"), )
 
 WSGI_APPLICATION = "ferry.core.wsgi.application"
 
@@ -169,3 +170,9 @@ SSO_OIDC_SCOPES = "openid email profile"
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "https://sown.org.uk/"
+
+DJANGO_VITE = {
+  "default": {
+    "dev_mode": False
+  }
+}

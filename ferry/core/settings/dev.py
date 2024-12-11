@@ -2,6 +2,7 @@
 from .base import *  # noqa: F403
 
 DEBUG = True
+DJANGO_VITE['default']['dev_mode'] = True
 
 SECURE_SSL_REDIRECT = False
 
