@@ -146,3 +146,21 @@ class PubEventBooking(models.Model):
 
     def __str__(self) -> str:
         return f"Booking made for {self.pub_event}"
+
+
+class PubEventExtraInfo(models.Model):
+    id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
+    pub_event = models.ForeignKey(PubEvent, on_delete=models.CASCADE, related_name="extra_info")
+
+    info = models.JSONField()
+
+    created_by = models.ForeignKey("accounts.Person", on_delete=models.PROTECT, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self) -> str:
+        return f"Extra info for {self.pub_event}: {self.formatted_info}"
+
+    @property
+    def formatted_info(self) -> str:
+        return self.info["content"]

@@ -29,6 +29,7 @@ class PubTableSerializer(serializers.ModelSerializer):
 
 class PubEventSerializer(serializers.ModelSerializer):
     attendees = serializers.SerializerMethodField("get_attendees")
+    announcements = serializers.SerializerMethodField("get_announcements")
     table = PubTableSerializer(read_only=True)
 
     class Meta:
@@ -40,6 +41,7 @@ class PubEventSerializer(serializers.ModelSerializer):
             "discord_id",
             "table",
             "attendees",
+            "announcements",
             "created_by",
             "created_at",
             "updated_at",
@@ -49,6 +51,10 @@ class PubEventSerializer(serializers.ModelSerializer):
         attendees = get_attendees_for_pub_event(pub_event)
         serializer = PersonLinkWithDiscordIdSerializer(read_only=True, many=True, instance=attendees)
         return serializer.data
+
+    def get_announcements(self, pub_event: PubEvent) -> list[str]:
+        extra_infos = pub_event.extra_info.order_by("created_at").all()
+        return [ei.formatted_info for ei in extra_infos]
 
 
 class PublicPubEventSerializer(serializers.ModelSerializer):
