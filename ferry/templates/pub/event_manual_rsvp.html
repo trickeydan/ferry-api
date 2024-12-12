@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags %}
+
+{% block title %}{{ object }}{% endblock %}
+{% block page_title %}{{ object }}{% endblock %}
+
+{% block content %}
+  {% crispy form %}
+{% endblock %}

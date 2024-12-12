@@ -97,6 +97,7 @@ class PubEvent(models.Model):
 class PubEventRSVPMethod(models.TextChoices):
     AUTO = "A", "AutoPub"
     DISCORD = "D", "Discord"
+    MANUAL = "M", "Manual Entry"  # aka. criminals
     WEB = "W", "Web"
 
 
@@ -118,6 +119,7 @@ class PubEventRSVP(models.Model):
                 check=(
                     models.Q(method=PubEventRSVPMethod.AUTO, is_attending=True)
                     | models.Q(method=PubEventRSVPMethod.DISCORD, is_attending=True)
+                    | models.Q(method=PubEventRSVPMethod.MANUAL, is_attending=True)
                     | models.Q(method=PubEventRSVPMethod.WEB)
                 ),
                 name="correct_value_for_method",

@@ -10,10 +10,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, FormView, ListView
+from django.views.generic.detail import SingleObjectMixin
+from rules.contrib.views import PermissionRequiredMixin
 
 from ferry.core.http import HttpRequest
 from ferry.core.mixins import BreadcrumbsMixin
+from ferry.pub.forms import PubEventRSVPManualEntryForm
 from ferry.pub.models import PubEvent, PubEventBooking, PubEventQuerySet, PubEventRSVP, PubEventRSVPMethod
 from ferry.pub.repository import annotate_attendee_count, get_attendees_for_pub_event, get_pub_booking_form
 
@@ -180,3 +183,43 @@ class UpdatePubEventResponseView(LoginRequiredMixin, View):
                 "booking_form": get_pub_booking_form(pub_event),
             },
         )
+
+
+class PubEventManualRSVPView(
+    LoginRequiredMixin, PermissionRequiredMixin, SingleObjectMixin, BreadcrumbsMixin, FormView
+):
+    form_class = PubEventRSVPManualEntryForm
+    permission_required = "pub.record_attendance"
+    template_name = "pub/event_manual_rsvp.html"
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        return {
+            **super().get_form_kwargs(),
+            "pub_event": self.get_object(),
+        }
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        self.object = self.get_object()
+        return super().get_context_data(object=self.object)
+
+    def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
+        return super().get_breadcrumbs() + [
+            (None, "Pub"),
+            (reverse_lazy("pub:events-list"), "Events"),
+            (reverse_lazy("pub:events-detail", args=[self.object.id]), str(self.object)),
+            (None, "Add Manual RSVP"),
+        ]
+
+    def get_queryset(self) -> PubEventQuerySet:
+        assert self.request.user.is_authenticated
+        qs = PubEvent.objects.for_user(self.request.user).select_related("booking")
+        qs = annotate_attendee_count(qs)
+        return qs
+
+    def form_valid(self, form: PubEventRSVPManualEntryForm) -> http.HttpResponse:
+        person = form.cleaned_data["person"]
+        PubEventRSVP.objects.create(
+            person=person, pub_event=form.pub_event, is_attending=True, method=PubEventRSVPMethod.MANUAL
+        )
+        messages.success(self.request, f"Marked {person} as present")
+        return redirect("pub:events-detail", form.pub_event.id)

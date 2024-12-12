@@ -1,3 +1,4 @@
+{% load rules %}
 <div class="container event-details">
   <div class="row">
     <div class="col-sm-6">
@@ -94,6 +95,10 @@
               <p>There are no attendees.</p>
             {% endfor %}
           </ul>
+          {% has_perm 'pub.record_attendance' request.user as can_record_attendance %}
+          {% if can_record_attendance %}
+            <a class="btn btn-danger mt-3" href="{% url 'pub:events-manual-rsvp' event.id %}">Add manual RSVP</a>
+          {% endif %}
         </div>
       </div>
     </div>
