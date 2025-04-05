@@ -11,7 +11,7 @@ from ferry.court.models import Ratification
 class TestPersonModelWithCurrentScore:
     @pytest.fixture
     def person_1(self) -> Person:
-        return PersonFactory()
+        return PersonFactory()  # type: ignore[return-value]
 
     def test_no_accusations(self, person_1: Person) -> None:
         person = Person.objects.with_current_score().get(id=person_1.id)
