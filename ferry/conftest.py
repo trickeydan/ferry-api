@@ -6,7 +6,7 @@ from ferry.court.factories import PersonFactory
 
 @pytest.fixture
 def person() -> Person:
-    return PersonFactory()
+    return PersonFactory()  # type: ignore[return-value]
 
 
 @pytest.fixture

@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="pubeventrsvp",
             constraint=models.CheckConstraint(
-                condition=models.Q(  # type: ignore
+                condition=models.Q(
                     models.Q(("is_attending", True), ("method", "A")),
                     models.Q(("is_attending", True), ("method", "D")),
                     ("method", "W"),
