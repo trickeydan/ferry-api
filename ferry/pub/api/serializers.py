@@ -3,7 +3,7 @@ from rest_framework.utils.serializer_helpers import ReturnDict
 
 from ferry.accounts.api.serializers import PersonLinkWithDiscordIdSerializer
 from ferry.accounts.models import Person
-from ferry.pub.models import Pub, PubEvent, PubTable
+from ferry.pub.models import Pub, PubEvent, PubEventBooking, PubTable
 from ferry.pub.repository import get_attendees_for_pub_event
 
 
@@ -27,10 +27,22 @@ class PubTableSerializer(serializers.ModelSerializer):
         fields = ("id", "pub", "number")
 
 
+class PubEventBookingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PubEventBooking
+        fields = ("id", "table_size", "created_by")
+
+
+class PubEventBookingCreateSerializer(serializers.Serializer):
+    created_by = serializers.PrimaryKeyRelatedField(queryset=Person.objects.all())
+    table_size = serializers.IntegerField(max_value=1000, min_value=1, required=True)
+
+
 class PubEventSerializer(serializers.ModelSerializer):
     attendees = serializers.SerializerMethodField("get_attendees")
     announcements = serializers.SerializerMethodField("get_announcements")
     table = PubTableSerializer(read_only=True)
+    booking = PubEventBookingSerializer(read_only=True)
 
     class Meta:
         model = PubEvent
@@ -42,6 +54,7 @@ class PubEventSerializer(serializers.ModelSerializer):
             "table",
             "attendees",
             "announcements",
+            "booking",
             "created_by",
             "created_at",
             "updated_at",

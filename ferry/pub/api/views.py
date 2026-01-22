@@ -10,12 +10,22 @@ from rest_framework.response import Response
 from ferry.accounts.models import Person
 from ferry.pub.api.serializers import (
     PubEventAddRemoveAttendeeSerializer,
+    PubEventBookingCreateSerializer,
     PubEventSerializer,
     PubEventTableSerializer,
     PublicPubEventSerializer,
     PubSerializer,
 )
-from ferry.pub.models import Pub, PubEvent, PubEventQuerySet, PubEventRSVP, PubEventRSVPMethod, PubQuerySet, PubTable
+from ferry.pub.models import (
+    Pub,
+    PubEvent,
+    PubEventBooking,
+    PubEventQuerySet,
+    PubEventRSVP,
+    PubEventRSVPMethod,
+    PubQuerySet,
+    PubTable,
+)
 
 
 @extend_schema_view(
@@ -48,7 +58,9 @@ class PubEventObjectPermission(permissions.BasePermission):
             return True
 
         if request.method == "POST":
-            return True
+            # For custom POST actions, check edit permission
+            # This covers actions like booking, table, etc.
+            return request.user.has_perm("pub.edit_event", pub_event)
 
         if request.method in ["PUT", "PATCH"]:
             return request.user.has_perm("pub.edit_event", pub_event)
@@ -157,6 +169,37 @@ class PubEventViewset(
 
         pub_event.table = table
         pub_event.save()
+
+        serializer = PubEventSerializer(instance=pub_event)
+        return Response(serializer.data)
+
+    @extend_schema(
+        tags=["Pub - Event Booking"],
+        request=PubEventBookingCreateSerializer,
+        responses={200: PubEventSerializer, 400: None},
+        description="Create a booking for a pub event.",
+    )
+    @action(detail=True, methods=["POST"])
+    def booking(self, request: Request, pk: None = None) -> Response:
+        pub_event: PubEvent = self.get_object()
+
+        try:
+            _ = pub_event.booking
+            return Response({"error": "A booking already exists for this event."}, status=409)
+        except PubEventBooking.DoesNotExist:
+            pass
+
+        booking_info = PubEventBookingCreateSerializer(data=request.data)
+        booking_info.is_valid(raise_exception=True)
+
+        PubEventBooking.objects.create(
+            pub_event=pub_event,
+            created_by=booking_info.validated_data["created_by"],
+            table_size=booking_info.validated_data["table_size"],
+        )
+
+        # Refresh the object to load the booking relationship
+        pub_event.refresh_from_db()
 
         serializer = PubEventSerializer(instance=pub_event)
         return Response(serializer.data)
