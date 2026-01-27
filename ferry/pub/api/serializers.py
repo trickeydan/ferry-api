@@ -1,10 +1,12 @@
+from typing import Never
+
 from rest_framework import serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
 
 from ferry.accounts.api.serializers import PersonLinkWithDiscordIdSerializer
 from ferry.accounts.models import Person
-from ferry.pub.models import Pub, PubEvent, PubEventBooking, PubTable
-from ferry.pub.repository import get_attendees_for_pub_event
+from ferry.pub.models import Pub, PubEvent, PubEventAttendanceTombstone, PubEventBooking, PubTable
+from ferry.pub.repository import get_attendance_tombstones_for_pub_event, get_attendees_for_pub_event
 
 
 class PubSerializer(serializers.ModelSerializer):
@@ -40,6 +42,7 @@ class PubEventBookingCreateSerializer(serializers.Serializer):
 
 class PubEventSerializer(serializers.ModelSerializer):
     attendees = serializers.SerializerMethodField("get_attendees")
+    tombstoned_attendees = serializers.SerializerMethodField("get_tombstoned_attendees")
     announcements = serializers.SerializerMethodField("get_announcements")
     table = PubTableSerializer(read_only=True)
     booking = PubEventBookingSerializer(read_only=True)
@@ -53,6 +56,7 @@ class PubEventSerializer(serializers.ModelSerializer):
             "discord_id",
             "table",
             "attendees",
+            "tombstoned_attendees",
             "announcements",
             "booking",
             "created_by",
@@ -63,6 +67,13 @@ class PubEventSerializer(serializers.ModelSerializer):
     def get_attendees(self, pub_event: PubEvent) -> ReturnDict:
         attendees = get_attendees_for_pub_event(pub_event)
         serializer = PersonLinkWithDiscordIdSerializer(read_only=True, many=True, instance=attendees)
+        return serializer.data
+
+    def get_tombstoned_attendees(self, pub_event: PubEvent) -> ReturnDict | list[Never]:
+        attendance_tombstones = get_attendance_tombstones_for_pub_event(pub_event)
+        if not attendance_tombstones.exists():
+            return []
+        serializer = PersonLinkWithDiscordIdSerializer(read_only=True, many=True, instance=attendance_tombstones)
         return serializer.data
 
     def get_announcements(self, pub_event: PubEvent) -> list[str]:
@@ -93,3 +104,18 @@ class PubEventAddRemoveAttendeeSerializer(serializers.Serializer):
 
 class PubEventTableSerializer(serializers.Serializer):
     table_number = serializers.IntegerField(max_value=1000, min_value=1, required=True)
+
+
+class PubEventAttendanceTombstoneCreateSerializer(serializers.Serializer):
+    person = serializers.PrimaryKeyRelatedField(queryset=Person.objects.all())
+
+    def validate_person(self, value: Person) -> Person:
+        if not value.autopub:
+            raise serializers.ValidationError("This person is not signed up for autopub.")
+        return value
+
+
+class PubEventAttendanceTombstoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PubEventAttendanceTombstone
+        fields = ("id", "person", "pub_event")  # Only IDs

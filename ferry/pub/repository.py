@@ -13,6 +13,11 @@ def get_attendees_for_pub_event(pub_event: PubEvent) -> PersonQuerySet:
     return Person.objects.filter(id__in=person_ids).order_by(Lower("display_name"))
 
 
+def get_attendance_tombstones_for_pub_event(pub_event: PubEvent) -> PersonQuerySet:
+    person_ids = pub_event.attendance_tombstones.values("person")
+    return Person.objects.filter(id__in=person_ids).order_by(Lower("display_name"))
+
+
 def annotate_attendee_count(pub_event_qs: PubEventQuerySet) -> PubEventQuerySet:
     sub_qs = (
         PubEventRSVP.objects.filter(pub_event_id=models.OuterRef("id"), is_attending=True)

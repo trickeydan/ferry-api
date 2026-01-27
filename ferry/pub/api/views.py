@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.db import models, transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, permissions, viewsets
@@ -10,6 +11,8 @@ from rest_framework.response import Response
 from ferry.accounts.models import Person
 from ferry.pub.api.serializers import (
     PubEventAddRemoveAttendeeSerializer,
+    PubEventAttendanceTombstoneCreateSerializer,
+    PubEventAttendanceTombstoneSerializer,
     PubEventBookingCreateSerializer,
     PubEventSerializer,
     PubEventTableSerializer,
@@ -19,6 +22,7 @@ from ferry.pub.api.serializers import (
 from ferry.pub.models import (
     Pub,
     PubEvent,
+    PubEventAttendanceTombstone,
     PubEventBooking,
     PubEventQuerySet,
     PubEventRSVP,
@@ -95,12 +99,33 @@ class PubEventViewset(
         return PubEvent.objects.for_user(self.request.user)
 
     def perform_create(self, serializer: PubEventSerializer) -> None:  # type: ignore[override]
-        pub_event = serializer.save()
-        rsvps = [
-            PubEventRSVP(person=person, pub_event=pub_event, is_attending=True, method=PubEventRSVPMethod.AUTO)
-            for person in Person.objects.filter(autopub=True)
-        ]
-        PubEventRSVP.objects.bulk_create(rsvps)
+        with transaction.atomic():
+            pub_event = serializer.save()
+            # Get all unused tombstones for the next pub
+            unused_tombstones = PubEventAttendanceTombstone.objects.filter(pub_event__isnull=True)
+
+            rsvps = [
+                PubEventRSVP(person=person, pub_event=pub_event, is_attending=True, method=PubEventRSVPMethod.AUTO)
+                for person in Person.objects.filter(autopub=True).exclude(
+                    id__in=unused_tombstones.values_list("person", flat=True)
+                )
+            ]
+            if unused_tombstones.exists():
+                rsvps.extend(
+                    [
+                        PubEventRSVP(
+                            person=person, pub_event=pub_event, is_attending=False, method=PubEventRSVPMethod.TOMBSTONE
+                        )
+                        for person in Person.objects.filter(
+                            autopub=True, id__in=unused_tombstones.values_list("person", flat=True)
+                        )
+                    ]
+                )
+
+            # Create the RSVPs for the new event
+            PubEventRSVP.objects.bulk_create(rsvps)
+            # Link the tombstones to the new event
+            unused_tombstones.update(pub_event=pub_event)
 
     @extend_schema(
         tags=["Pub - Event Attendance"],
@@ -115,12 +140,17 @@ class PubEventViewset(
         attendee_info = PubEventAddRemoveAttendeeSerializer(data=request.data)
         attendee_info.is_valid(raise_exception=True)
 
-        # Ensure the RSVP exists, if adding make method as discord.
-        PubEventRSVP.objects.get_or_create(
+        person = attendee_info.validated_data["person"]
+
+        # Update or create RSVP, ensuring it's marked as attending via DISCORD
+        # This handles TOMBSTONE RSVPs by updating them to DISCORD
+        PubEventRSVP.objects.update_or_create(
             pub_event=pub_event,
-            person=attendee_info.validated_data["person"],
+            person=person,
             defaults={"is_attending": True, "method": PubEventRSVPMethod.DISCORD},
         )
+
+        # Note that we do not remove a tombstone here intentionally.
 
         serializer = PubEventSerializer(instance=pub_event)
         return Response(serializer.data)
@@ -216,3 +246,46 @@ class PubEventViewset(
             return Response(serializer.data)
         else:
             return Response(status=204)
+
+    @extend_schema(
+        tags=["Pub - Event Attendance"],
+        request=PubEventAttendanceTombstoneCreateSerializer,
+        responses={200: PubEventAttendanceTombstoneSerializer, 409: None},
+        description="Create a tombstone for a person to skip the next pub.",
+    )
+    @action(url_path="tombstones", detail=False, methods=["POST"])
+    def create_tombstone(self, request: Request, pk: None = None) -> Response:
+        tombstone_info = PubEventAttendanceTombstoneCreateSerializer(data=request.data)
+        tombstone_info.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            # Get the next pub event, if there is one.
+            # If there is one, we will automatically link the tombstone to the event.
+            pub_event = PubEvent.objects.get_next()
+
+            # Check if the person already has a tombstone
+            if (
+                PubEventAttendanceTombstone.objects.filter(person=tombstone_info.validated_data["person"])
+                .filter(models.Q(pub_event=pub_event) if pub_event else models.Q(pub_event__isnull=True))
+                .exists()
+            ):
+                return Response(
+                    {"error": "This person already has a tombstone for this event or the next pub."}, status=409
+                )
+
+            tombstone = PubEventAttendanceTombstone.objects.create(
+                pub_event=pub_event,
+                person=tombstone_info.validated_data["person"],
+            )
+
+            # Update any RSVPs using AutoPub for the event, if it exists.
+            if pub_event:
+                rsvps = PubEventRSVP.objects.filter(
+                    pub_event=pub_event,
+                    person=tombstone_info.validated_data["person"],
+                    method=PubEventRSVPMethod.AUTO,
+                )
+                rsvps.update(method=PubEventRSVPMethod.TOMBSTONE, is_attending=False)
+
+        serializer = PubEventAttendanceTombstoneSerializer(instance=tombstone)
+        return Response(serializer.data)

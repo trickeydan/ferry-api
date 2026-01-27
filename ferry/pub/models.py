@@ -99,6 +99,7 @@ class PubEventRSVPMethod(models.TextChoices):
     DISCORD = "D", "Discord"
     MANUAL = "M", "Manual Entry"  # aka. criminals
     WEB = "W", "Web"
+    TOMBSTONE = "T", "Tombstone"  # opted in to autopub but skipped
 
 
 class PubEventRSVP(models.Model):
@@ -121,6 +122,7 @@ class PubEventRSVP(models.Model):
                     | models.Q(method=PubEventRSVPMethod.DISCORD, is_attending=True)
                     | models.Q(method=PubEventRSVPMethod.MANUAL, is_attending=True)
                     | models.Q(method=PubEventRSVPMethod.WEB)
+                    | models.Q(method=PubEventRSVPMethod.TOMBSTONE, is_attending=False)
                 ),
                 name="correct_value_for_method",
                 violation_error_message="Invalid attendance value for RSVP method",
@@ -164,3 +166,34 @@ class PubEventExtraInfo(models.Model):
     @property
     def formatted_info(self) -> str:
         return self.info["content"]
+
+
+class PubEventAttendanceTombstone(models.Model):
+    id = models.UUIDField(verbose_name="ID", primary_key=True, default=uuid.uuid4, editable=False)
+    pub_event = models.ForeignKey(
+        PubEvent, on_delete=models.CASCADE, related_name="attendance_tombstones", null=True, blank=True
+    )
+    person = models.ForeignKey("accounts.Person", on_delete=models.CASCADE, related_name="attendance_tombstones")
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("person",),
+                condition=models.Q(pub_event__isnull=True),
+                name="one_attendance_tombstone_per_person_for_next_pub",
+            ),
+            models.UniqueConstraint(
+                fields=("person", "pub_event"),
+                condition=models.Q(pub_event__isnull=False),
+                name="one_attendance_tombstone_per_person_per_event",
+                violation_error_message="There is already an attendance tombstone for this person at this event",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        if self.pub_event:
+            return f"Attendance tombstone for {self.person} at {self.pub_event}"
+        else:
+            return f"Attendance tombstone for {self.person} at the next pub"

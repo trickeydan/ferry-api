@@ -10,6 +10,10 @@
     {% include "pub/inc/event_details.html" with event=upcoming_pub booking=upcoming_pub_booking booking_form=upcoming_pub_booking_form attendees=attendees rsvp=upcoming_pub_rsvp is_past=False %}
   {% else %}
     <p>The location of the next pub has not yet been decided. Please use <code>/pub next</code> in Discord.</p>
+
+    {% if has_upcoming_tombstone %}
+      <p>You have auto-skipped the next pub. You will not be autopubbed for it.</p>
+    {% endif %}
   {% endif %}
   <h2 class="mt-4">Events</h2>
   <p>The following pub events are recorded:</p>

@@ -17,7 +17,14 @@ from rules.contrib.views import PermissionRequiredMixin
 from ferry.core.http import HttpRequest
 from ferry.core.mixins import BreadcrumbsMixin
 from ferry.pub.forms import PubEventRSVPManualEntryForm
-from ferry.pub.models import PubEvent, PubEventBooking, PubEventQuerySet, PubEventRSVP, PubEventRSVPMethod
+from ferry.pub.models import (
+    PubEvent,
+    PubEventAttendanceTombstone,
+    PubEventBooking,
+    PubEventQuerySet,
+    PubEventRSVP,
+    PubEventRSVPMethod,
+)
 from ferry.pub.repository import annotate_attendee_count, get_attendees_for_pub_event, get_pub_booking_form
 
 
@@ -50,12 +57,18 @@ class PubEventListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
             upcoming_pub_rsvp = None
             booking = None
 
+        has_upcoming_tombstone = PubEventAttendanceTombstone.objects.filter(
+            person=self.request.user.person,
+            pub_event__isnull=True,
+        ).exists()
+
         return super().get_context_data(
             upcoming_pub=upcoming_pub,
             upcoming_pub_rsvp=upcoming_pub_rsvp,
             upcoming_pub_booking=booking,
             upcoming_pub_booking_form=get_pub_booking_form(upcoming_pub) if upcoming_pub else None,
             attendees=get_attendees_for_pub_event(upcoming_pub) if upcoming_pub else None,
+            has_upcoming_tombstone=has_upcoming_tombstone,
             **kwargs,
         )
 

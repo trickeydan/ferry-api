@@ -65,6 +65,19 @@
                   </button>
                 {% endif %}
               {% endif %}
+            {% elif rsvp.method == "T" %}
+              {# Tombstones are always a No #}
+              <p>You have opted-in to AutoPub but skipped the next pub.</p>
+              <p>If you want to come, please RSVP again.</p>
+              {% if not event.is_past %}
+                <button class="btn btn-sm btn-success"
+                        hx-post="{% url 'pub:events-update-response' event.id %}"
+                        hx-target="closest .event-details"
+                        hx-swap='outerHTML'
+                >
+                  I'm coming!
+                </button>
+              {% endif %}
             {% endif %}
           {% else %}
             {% if event.is_past %}
