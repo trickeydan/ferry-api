@@ -12,6 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DEBUG = False
 
 ALLOWED_HOSTS: list[str] = []
+APP_NAME = "Pub"
 
 # Application definition
 
@@ -66,6 +67,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "ferry.core.context_processors.app_name",
             ],
         },
     },
