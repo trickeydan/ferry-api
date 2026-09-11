@@ -16,14 +16,14 @@ class TestPersonModelWithCurrentScore:
     def test_no_accusations(self, person_1: Person) -> None:
         person = Person.objects.with_current_score().get(id=person_1.id)
 
-        assert person.current_score == 0  # type: ignore[attr-defined]
+        assert person.current_score == 0
 
     def test_one_accusation(self, person_1: Person) -> None:
         AccusationFactory.create(suspect=person_1)
 
         person = Person.objects.with_current_score().get(id=person_1.id)
 
-        assert person.current_score == 1  # type: ignore[attr-defined]
+        assert person.current_score == 1
 
     def test_two_accusations(self, person_1: Person) -> None:
         AccusationFactory.create(suspect=person_1)
@@ -31,14 +31,14 @@ class TestPersonModelWithCurrentScore:
 
         person = Person.objects.with_current_score().get(id=person_1.id)
 
-        assert person.current_score == 2  # type: ignore[attr-defined]
+        assert person.current_score == 2
 
     def test_ignore_unratified_accusations(self, person_1: Person) -> None:
         AccusationFactory.create(suspect=person_1, ratification=None)
 
         person = Person.objects.with_current_score().get(id=person_1.id)
 
-        assert person.current_score == 0  # type: ignore[attr-defined]
+        assert person.current_score == 0
 
     @pytest.mark.parametrize(
         ("accusation_time", "expected_score"),
@@ -62,7 +62,7 @@ class TestPersonModelWithCurrentScore:
         acc.save()
 
         person = Person.objects.with_current_score().get(id=person_1.id)
-        assert person.current_score == expected_score  # type: ignore[attr-defined]
+        assert person.current_score == expected_score
 
 
 @pytest.mark.django_db

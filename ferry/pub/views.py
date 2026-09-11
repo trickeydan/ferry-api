@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import SuspiciousOperation
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse
 from django.utils import timezone
 from django.views import View
 from django.views.generic import DetailView, FormView, ListView
@@ -79,7 +79,7 @@ class PubEventDetailView(LoginRequiredMixin, BreadcrumbsMixin, DetailView):
     def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
         return super().get_breadcrumbs() + [
             (None, "Pub"),
-            (reverse_lazy("pub:events-list"), "Events"),
+            (reverse("pub:events-list"), "Events"),
             (None, str(self.object)),
         ]
 
@@ -218,8 +218,8 @@ class PubEventManualRSVPView(
     def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
         return super().get_breadcrumbs() + [
             (None, "Pub"),
-            (reverse_lazy("pub:events-list"), "Events"),
-            (reverse_lazy("pub:events-detail", args=[self.object.id]), str(self.object)),
+            (reverse("pub:events-list"), "Events"),
+            (reverse("pub:events-detail", args=[self.object.id]), str(self.object)),
             (None, "Add Manual RSVP"),
         ]
 

@@ -3,7 +3,7 @@ from uuid import UUID
 
 import pytest
 from django.test import Client
-from django.urls import reverse_lazy
+from django.urls import reverse
 
 from ferry.accounts.factories import PersonFactory
 from ferry.accounts.models import Person, User
@@ -15,7 +15,7 @@ from ferry.court.models import Accusation, Ratification
 @pytest.mark.django_db
 class TestRatificationDetailEndpoint(APITest):
     def _get_url(self, accusation_id: UUID) -> str:
-        return reverse_lazy("api-2.0.0:accusations-ratification", args=[accusation_id])
+        return reverse("api-2.0.0:accusations-ratification", args=[accusation_id])
 
     def test_get_unauthenticated(self, client: Client) -> None:
         resp = client.get(self._get_url(UUID(int=0)))
@@ -62,7 +62,7 @@ class TestRatificationDetailEndpoint(APITest):
 @pytest.mark.django_db
 class TestRatificationCreateEndpoint(APITest):
     def _get_url(self, accusation_id: UUID) -> str:
-        return reverse_lazy("api-2.0.0:accusations-ratification", args=[accusation_id])
+        return reverse("api-2.0.0:accusations-ratification", args=[accusation_id])
 
     def test_post_unauthenticated(self, client: Client) -> None:
         resp = client.post(self._get_url(UUID(int=0)))
@@ -284,7 +284,7 @@ class TestRatificationCreateEndpoint(APITest):
 @pytest.mark.django_db
 class TestRatificationDeleteEndpoint(APITest):
     def _get_url(self, accusation_id: UUID) -> str:
-        return reverse_lazy("api-2.0.0:accusations-ratification", args=[accusation_id])
+        return reverse("api-2.0.0:accusations-ratification", args=[accusation_id])
 
     def test_delete_unauthenticated(self, client: Client) -> None:
         resp = client.delete(self._get_url(UUID(int=0)))

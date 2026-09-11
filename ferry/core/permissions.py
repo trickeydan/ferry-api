@@ -7,7 +7,7 @@ from ferry.accounts.models import Person, User
 from ferry.court.models import Consequence
 
 
-@rules.predicate  # type: ignore[misc]
+@rules.predicate  # type: ignore[untyped-decorator]
 def user_created_consequence(user: User, consequence: Consequence) -> bool:
     try:
         return user.person == consequence.created_by
@@ -15,7 +15,7 @@ def user_created_consequence(user: User, consequence: Consequence) -> bool:
         return False
 
 
-@rules.predicate  # type: ignore[misc]
+@rules.predicate  # type: ignore[untyped-decorator]
 def user_is_person(user: User, person: Person) -> bool:
     try:
         return user.person == person

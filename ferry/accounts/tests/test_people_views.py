@@ -6,7 +6,7 @@ from uuid import UUID
 import pytest
 from django.core.signing import TimestampSigner
 from django.test import Client
-from django.urls import reverse_lazy
+from django.urls import reverse
 
 from ferry.accounts.factories import PersonFactory
 from ferry.accounts.models import Person, User
@@ -18,7 +18,7 @@ from ferry.court.factories import AccusationFactory
 
 @pytest.mark.django_db
 class TestPeopleListEndpoint(APITest):
-    url = reverse_lazy("api-2.0.0:people-list")
+    url = reverse("api-2.0.0:people-list")
 
     def test_get_unauthenticated(self, client: Client) -> None:
         resp = client.get(self.url)
@@ -94,7 +94,7 @@ class TestPeopleListEndpoint(APITest):
 @pytest.mark.django_db
 class TestPeopleCreateEndpoint(APITest):
     def _get_url(self) -> str:
-        return reverse_lazy("api-2.0.0:people-list")
+        return reverse("api-2.0.0:people-list")
 
     def test_post_unauthenticated(self, client: Client) -> None:
         resp = client.post(self._get_url())
@@ -247,7 +247,7 @@ class TestPeopleCreateEndpoint(APITest):
 @pytest.mark.django_db
 class TestPeopleDetailEndpoint(APITest):
     def _get_url(self, person_id: UUID) -> str:
-        return reverse_lazy("api-2.0.0:people-detail", args=[person_id])
+        return reverse("api-2.0.0:people-detail", args=[person_id])
 
     def test_get_unauthenticated(self, client: Client) -> None:
         resp = client.get(self._get_url(UUID(int=0)))
@@ -314,7 +314,7 @@ class TestPeopleDetailEndpoint(APITest):
 @pytest.mark.django_db
 class TestPeopleUpdateEndpoint(APITest):
     def _get_url(self, person_id: UUID) -> str:
-        return reverse_lazy("api-2.0.0:people-detail", args=[person_id])
+        return reverse("api-2.0.0:people-detail", args=[person_id])
 
     def test_put_unauthenticated(self, client: Client) -> None:
         resp = client.put(self._get_url(UUID(int=0)))
@@ -549,7 +549,7 @@ class TestPeopleUpdateEndpoint(APITest):
 @pytest.mark.django_db
 class TestPeopleDeleteEndpoint(APITest):
     def _get_url(self, person_id: UUID) -> str:
-        return reverse_lazy("api-2.0.0:people-detail", args=[person_id])
+        return reverse("api-2.0.0:people-detail", args=[person_id])
 
     def test_delete_unauthenticated(self, client: Client) -> None:
         resp = client.delete(self._get_url(UUID(int=0)))
@@ -592,7 +592,7 @@ class TestPeopleDeleteEndpoint(APITest):
 @pytest.mark.django_db
 class TestPeopleTokenEndpoint(APITest):
     def _get_url(self, person_id: UUID) -> str:
-        return reverse_lazy("api-2.0.0:people-fact", args=[person_id])
+        return reverse("api-2.0.0:people-fact", args=[person_id])
 
     def test_get_unauthenticated(self, client: Client) -> None:
         resp = client.get(self._get_url(UUID(int=0)))

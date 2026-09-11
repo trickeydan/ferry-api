@@ -8,7 +8,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.db import models
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, ListView, View
 
 from ferry.core.http import HttpRequest
@@ -39,11 +39,13 @@ class ConsequenceCreateView(LoginRequiredMixin, BreadcrumbsMixin, CreateView):
     model = Consequence
     form_class = ConsequenceCreateForm
     success_url = reverse_lazy("court:consequence-list")
-    breadcrumbs = [
-        (None, "Ferries"),
-        (reverse_lazy("court:consequence-list"), "My Consequences"),
-        (None, "New Consequence"),
-    ]
+    breadcrumbs = [(None, "Ferries")]
+
+    def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
+        return super().get_breadcrumbs() + [
+            (reverse("court:consequence-list"), "My Consequences"),
+            (None, "New Consequence"),
+        ]
 
     def get_form_kwargs(self) -> dict[str, Any]:
         assert self.request.user.is_authenticated

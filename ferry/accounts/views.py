@@ -130,7 +130,7 @@ class PersonDetailView(mixins.LoginRequiredMixin, BreadcrumbsMixin, DetailView):
 
     def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
         return super().get_breadcrumbs() + [
-            (reverse_lazy("accounts:person-list"), "People"),
+            (reverse("accounts:person-list"), "People"),
             (None, self.object.display_name),
         ]
 
@@ -170,7 +170,10 @@ class CreateAPITokenView(mixins.LoginRequiredMixin, BreadcrumbsMixin, CreateView
     form_class = CreateAPITokenForm
     template_name = "accounts/api_token_create.html"
     success_url = reverse_lazy("accounts:api-tokens")
-    breadcrumbs = [(reverse_lazy("accounts:profile"), "My Profile"), (None, "Create API Token")]
+    breadcrumbs = []
+
+    def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
+        return super().get_breadcrumbs() + [(reverse("accounts:profile"), "My Profile"), (None, "Create API Token")]
 
     def form_valid(self, form: BaseModelForm) -> http.HttpResponse:
         form.instance.user = self.request.user
