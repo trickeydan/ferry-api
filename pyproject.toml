@@ -1,43 +1,60 @@
-[tool.poetry]
+[project]
 name = "ferry"
 version = "0.1.0"
 description = ""
-authors = ["Dan Trickey <git@trickey.io>"]
-license = "MIT"
+authors = [{ name = "Dan Trickey", email = "git@trickey.io" }]
+requires-python = ">=3.12,<4"
 readme = "README.md"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "django~=5.2.0",
+    "django-stubs-ext>=5.1.3,<6",
+    "requests>=2.32.3,<3",
+    "rules>=3.5,<4",
+    "djangorestframework>=3.16.0,<4",
+    "drf-spectacular>=0.28.0,<0.29",
+    "django-filter>=25.1,<26",
+    "authlib>=1.5.2,<2",
+    "django-crispy-forms>=2.3,<3",
+    "crispy-bootstrap5>=2025.4,<2026",
+    "django-emoji-picker>=0.0.6,<0.0.7",
+    "django-htmx>=1.23.0,<2",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-django = "~5.2.0"
-django-stubs-ext = "^5.1.3"
-requests = "^2.32.3"
-rules = "^3.5"
-djangorestframework = "^3.16.0"
-drf-spectacular = "^0.28.0"
-django-filter = "^25.1"
-authlib = "^1.5.2"
-django-crispy-forms = "^2.3"
-crispy-bootstrap5 = "^2025.4"
-django-emoji-picker = "^0.0.6"
-django-htmx = "^1.23.0"
+[dependency-groups]
+prod = [
+    "granian>=2.2.0,<3",
+    "psycopg>=3.2.6,<4",
+]
+dev = [
+    "ruff>=0.11.4,<0.12",
+    "pytest>=8.0.0,<9",
+    "pytest-cov>=6.1.1,<7",
+    "pytest-django>=4.11.1,<5",
+    "djhtml>=3.0.7,<4",
+    "mypy>=1.15.0,<2",
+    "django-coverage-plugin>=3.1.0,<4",
+    "django-stubs[compatible-mypy]>=5.1.3,<6",
+    "factory-boy>=3.3.3,<4",
+    "types-requests>=2.32.0.20250328,<3",
+    "time-machine>=2.16.0,<3",
+    "djangorestframework-stubs>=3.15.3,<4",
+]
 
-[tool.poetry.group.prod.dependencies]
-granian = "^2.2.0"
-psycopg = "^3.2.6"
+[tool.uv]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.11.4"
-pytest = "^8.0.0"
-pytest-cov = "^6.1.1"
-pytest-django = "^4.11.1"
-djhtml = "^3.0.7"
-mypy = "^1.15.0"
-django-coverage-plugin = "^3.1.0"
-django-stubs = {version = "^5.1.3", extras = ["compatible-mypy"]}
-factory-boy = "^3.3.3"
-types-requests = "^2.32.0.20250328"
-time-machine = "^2.16.0"
-djangorestframework-stubs = "^3.15.3"
+[tool.uv.build-backend]
+module-root = ""
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
 
 [tool.ruff]
 target-version = "py312"
@@ -111,7 +128,3 @@ omit = [
 
 [tool.coverage.django_coverage_plugin]
 template_extensions = 'html, txt, tex, email'
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

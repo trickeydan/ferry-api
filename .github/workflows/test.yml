@@ -19,16 +19,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - name: Install Poetry
-        run: pip install poetry
-      - name: Use in-project virtualenv
-        run: poetry config virtualenvs.in-project true
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
       - uses: actions/cache@v4
         with:
           path: .venv/
-          key: ${{ runner.os }}-${{ matrix.python }}-pip-${{ hashFiles('poetry.lock') }}-${{ hashFiles('pyproject.toml') }}
+          key: ${{ runner.os }}-${{ matrix.python }}-uv-${{ hashFiles('uv.lock') }}-${{ hashFiles('pyproject.toml') }}
       - name: Install dependencies
-        run: poetry install
+        run: uv sync --locked --all-groups
       - name: Static type checking
         run: make type
       - name: Lint
