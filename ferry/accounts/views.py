@@ -26,6 +26,8 @@ from .oauth import oauth_config
 
 
 class LoginView(auth_views.LoginView):
+    template_name = "accounts/login.html"
+
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> http.HttpResponse:  # type: ignore[override]
         # Redirect a user that is already logged in.
         # Borrowed from django.contrib.auth.views.LoginView.dispatch
@@ -38,7 +40,9 @@ class LoginView(auth_views.LoginView):
                 )
             return http.HttpResponseRedirect(redirect_to)
 
-        # Redirect to SSO immediately.
+        if request.method != "POST":
+            return self.render_to_response(self.get_context_data())
+
         request.session["sso_next"] = self.get_redirect_url()
 
         redirect_uri = request.build_absolute_uri(reverse("accounts:sso_oidc_redirect"))
