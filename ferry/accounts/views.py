@@ -4,11 +4,12 @@ from typing import Any, cast
 from uuid import UUID
 
 from django import http
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, mixins
 from django.contrib.auth import views as auth_views
 from django.core.exceptions import SuspiciousOperation
-from django.db import models
+from django.db import models, transaction
 from django.db.models.query import QuerySet
 from django.forms import BaseModelForm
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,6 +18,7 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Upd
 
 from ferry.accounts.forms import CreateAPITokenForm, PersonProfileForm, UserPersonLinkForm
 from ferry.accounts.models import Person
+from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 from ferry.core.http import HttpRequest
 from ferry.core.mixins import BreadcrumbsMixin
 from ferry.court.models import Accusation
@@ -40,11 +42,12 @@ class LoginView(auth_views.LoginView):
                 )
             return http.HttpResponseRedirect(redirect_to)
 
-        if request.method != "POST":
-            return self.render_to_response(self.get_context_data())
+        return super().dispatch(request, *args, **kwargs)
 
-        request.session["sso_next"] = self.get_redirect_url()
 
+class SOWNLoginView(View):
+    def get(self, request: HttpRequest) -> http.HttpResponseRedirect:
+        request.session["sso_next"] = request.GET.get("next", "/")
         redirect_uri = request.build_absolute_uri(reverse("accounts:sso_oidc_redirect"))
         return oauth_config.sown.authorize_redirect(request, redirect_uri)
 
@@ -91,6 +94,49 @@ class SSOOIDCRedirectView(View):
         user.save()
 
         return user
+
+
+class DiscordLoginView(View):
+    def get(self, request: HttpRequest) -> http.HttpResponseRedirect:
+        request.session["sso_next"] = request.GET.get("next", "/")
+        redirect_uri = request.build_absolute_uri(reverse("accounts:sso_discord_redirect"))
+        return oauth_config.discord.authorize_redirect(request, redirect_uri)
+
+
+class SSODiscordRedirectView(View):
+    def get(self, request: HttpRequest) -> http.HttpResponseBase:
+        token = oauth_config.discord.authorize_access_token(request)
+        userinfo = oauth_config.discord.get("users/@me", token=token).json()
+
+        try:
+            discord_id = int(userinfo["id"])
+        except KeyError:
+            return http.HttpResponseServerError("Invalid response from Discord.")
+
+        try:
+            member = get_discord_client().get_guild_member_by_id(settings.DISCORD_GUILD, discord_id)
+        except NoSuchGuildMemberError:
+            return http.HttpResponseForbidden("You must be a member of the Ferry Discord server to log in.")
+
+        member_user = member.get("user", {})
+        display_name = str(
+            member.get("nick") or member_user.get("global_name") or member_user.get("username") or discord_id
+        )
+        with transaction.atomic():
+            person, _ = Person.objects.get_or_create(
+                discord_id=discord_id,
+                defaults={"display_name": display_name},
+            )
+            user, _ = User.objects.get_or_create(
+                person=person,
+                defaults={"username": f"discord-{discord_id}", "first_name": display_name},
+            )
+
+        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+
+        redirect_to = request.session.pop("sso_next", None) or "/"
+        messages.info(request, f"Signed in via Discord. Welcome {user.get_short_name()}")
+        return redirect(redirect_to)
 
 
 class UnlinkedAccountView(mixins.LoginRequiredMixin, FormView):
