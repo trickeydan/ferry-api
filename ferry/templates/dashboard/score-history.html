@@ -1,0 +1,27 @@
+{% extends "base_home.html" %}
+{% load static %}
+
+{% block title %}Score History{% endblock %}
+
+{% block content %}
+  {{ block.super }}
+  <h2>Scores by academic year</h2>
+  <p>Each year runs from 1 September to 31 August.</p>
+  <div style="height: 300px; max-width: 900px;">
+    <canvas id="annual-score-chart" aria-label="Scores by academic year" role="img" data-api-url="{% url 'api-score-history' %}"></canvas>
+  </div>
+  <div class="table-responsive mt-4">
+    <table id="annual-score-table" class="table table-sm">
+      <caption>Scores by academic year</caption>
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <template id="annual-score-row-template">
+    <tr>
+      <th scope="row" data-person></th>
+    </tr>
+  </template>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+  <script src="{% static 'js/score_history.js' %}" type="module"></script>
+{% endblock %}

@@ -23,6 +23,7 @@ from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from ferry.core.api.router import urls as api_urls
+from ferry.dashboard.api.views import ScoreHistoryView
 
 urlpatterns = []
 
@@ -37,6 +38,7 @@ urlpatterns = [
     path("api/v2/schema/", SpectacularAPIView.as_view(), name="api-v2-schema"),
     path("api/v2/docs/", SpectacularSwaggerView.as_view(url_name="api-v2-schema"), name="api-v2-docs"),
     path("api/v2/", include((api_urls, "api-2.0.0"), namespace="api")),
+    path("api/v2/dashboard/score-history/", ScoreHistoryView.as_view(), name="api-score-history"),
 ]
 
 if settings.DEBUG:

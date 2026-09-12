@@ -3,7 +3,7 @@ from typing import Any
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.db.models.functions import DenseRank
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 
 from ferry.accounts.models import Person, PersonQuerySet
 from ferry.core.mixins import BreadcrumbsMixin
@@ -23,6 +23,10 @@ class ScoreboardView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
 
         qs = qs.order_by("rank", "-current_score", "-num_ratified_accusations")
         return qs
+
+
+class ScoreHistoryView(LoginRequiredMixin, BreadcrumbsMixin, TemplateView):
+    template_name = "dashboard/score-history.html"
 
 
 class RecentAccusationsView(LoginRequiredMixin, BreadcrumbsMixin, ListView):

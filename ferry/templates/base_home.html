@@ -10,6 +10,9 @@
         <a class="nav-link {% if view == 'dashboard:scoreboard' %}active{% endif %}" aria-current="page" href="{% url 'dashboard:scoreboard' %}">Scoreboard</a>
       </li>
       <li class="nav-item">
+        <a class="nav-link {% if view == 'dashboard:score-history' %}active{% endif %}" aria-current="page" href="{% url 'dashboard:score-history' %}">Score History</a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link {% if view == 'dashboard:recent-accusations' %}active{% endif %}" aria-current="page" href="{% url 'dashboard:recent-accusations' %}">Recent Accusations</a>
       </li>
     </ul>

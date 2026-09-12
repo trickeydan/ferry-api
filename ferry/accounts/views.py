@@ -42,7 +42,7 @@ class LoginView(auth_views.LoginView):
                 )
             return http.HttpResponseRedirect(redirect_to)
 
-        return super().dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)  # type: ignore[return-value]
 
 
 class SOWNLoginView(View):
