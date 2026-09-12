@@ -1,4 +1,4 @@
-.PHONY: all clean fix lint type test test-cov
+.PHONY: all clean fix lint type test test-cov hooks
 
 CMD:=uv run
 PYMODULE:=ferry
@@ -27,6 +27,9 @@ format:
 format-check:
 	find $(PYMODULE) -name "*.html" | xargs $(CMD) djhtml --check
 	$(CMD) ruff format --check $(PYMODULE)
+
+hooks:
+	uvx prek install
 
 type: 
 	$(CMD) mypy $(PYMODULE)
