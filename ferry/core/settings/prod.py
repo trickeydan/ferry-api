@@ -3,8 +3,10 @@ import os
 
 from .base import *  # noqa: F403
 
-ALLOWED_HOSTS = ["ferry.containers-dev.sown.org.uk"]
-CSRF_TRUSTED_ORIGINS = ["https://ferry.containers-dev.sown.org.uk"]
+HOSTNAME = os.environ.get("HOSTNAME", "ferry.example.com")
+
+ALLOWED_HOSTS = [HOSTNAME]
+CSRF_TRUSTED_ORIGINS = [f"https://{HOSTNAME}"]
 
 DEBUG = False
 
@@ -40,3 +42,5 @@ DISCORD_CLIENT_ID = os.environ["DISCORD_CLIENT_ID"]
 DISCORD_CLIENT_SECRET = os.environ["DISCORD_CLIENT_SECRET"]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", "https://google.com/")

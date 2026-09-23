@@ -173,4 +173,4 @@ DISCORD_CLIENT_ID = ""
 DISCORD_CLIENT_SECRET = ""
 
 LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "https://sown.org.uk/"
+LOGOUT_REDIRECT_URL = "https://google.com/"
