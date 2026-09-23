@@ -7,13 +7,7 @@ app_name = "accounts"
 
 urlpatterns = [
     path("login/", views.LoginView.as_view(), name="login"),
-    path("sown/login/", views.SOWNLoginView.as_view(), name="sown_login"),
     path("logout/", LogoutView.as_view(), name="logout"),
-    path(
-        "oidc/redirect/",
-        views.SSOOIDCRedirectView.as_view(),
-        name="sso_oidc_redirect",
-    ),
     path("discord/login/", views.DiscordLoginView.as_view(), name="discord_login"),
     path("discord/redirect/", views.SSODiscordRedirectView.as_view(), name="sso_discord_redirect"),
     path("unlinked/", views.UnlinkedAccountView.as_view(), name="unlinked_account"),

@@ -14,9 +14,9 @@ from django.db.models.query import QuerySet
 from django.forms import BaseModelForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView, View
 
-from ferry.accounts.forms import CreateAPITokenForm, PersonProfileForm, UserPersonLinkForm
+from ferry.accounts.forms import CreateAPITokenForm, PersonProfileForm
 from ferry.accounts.models import Person
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 from ferry.core.http import HttpRequest
@@ -43,57 +43,6 @@ class LoginView(auth_views.LoginView):
             return http.HttpResponseRedirect(redirect_to)
 
         return super().dispatch(request, *args, **kwargs)  # type: ignore[return-value]
-
-
-class SOWNLoginView(View):
-    def get(self, request: HttpRequest) -> http.HttpResponseRedirect:
-        request.session["sso_next"] = request.GET.get("next", "/")
-        redirect_uri = request.build_absolute_uri(reverse("accounts:sso_oidc_redirect"))
-        return oauth_config.sown.authorize_redirect(request, redirect_uri)
-
-
-class SSOOIDCRedirectView(View):
-    def get(self, request: HttpRequest) -> http.HttpResponseRedirect | http.HttpResponseServerError:
-        token = oauth_config.sown.authorize_access_token(request)
-        userinfo = token.get("userinfo", {})
-
-        try:
-            username = userinfo["sub"]
-        except KeyError:
-            return http.HttpResponseServerError("Invalid response from SSO.")
-
-        user, _ = User.objects.get_or_create(username=username)
-
-        self.update_user(user, userinfo)
-
-        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-
-        from_session = request.session.pop("sso_next", None)
-
-        redirect_to = from_session or "/"
-        messages.info(request, f"Signed in via SOWN SSO. Welcome {user.get_short_name()}")
-        return redirect(redirect_to)
-
-    def update_user(self, user: User, claims: dict[str, bool | str | list[str]]) -> User:
-        full_name = str(claims.get("given_name", ""))
-
-        name_parts = full_name.split(" ")
-
-        if len(name_parts) == 0:
-            return user
-        elif len(name_parts) == 1:
-            user.first_name = name_parts[0]
-            user.last_name = ""
-        else:
-            user.first_name = name_parts.pop(0)
-            user.last_name = " ".join(name_parts)
-
-        if email := claims.get("email"):
-            user.email = str(email)
-
-        user.save()
-
-        return user
 
 
 class DiscordLoginView(View):
@@ -139,10 +88,8 @@ class SSODiscordRedirectView(View):
         return redirect(redirect_to)
 
 
-class UnlinkedAccountView(mixins.LoginRequiredMixin, FormView):
+class UnlinkedAccountView(mixins.LoginRequiredMixin, TemplateView):
     template_name = "accounts/unlinked.html"
-    form_class = UserPersonLinkForm
-    success_url = reverse_lazy("dashboard:scoreboard")
 
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> http.HttpResponseBase:  # type: ignore[override]
         assert request.user.is_authenticated
@@ -151,16 +98,6 @@ class UnlinkedAccountView(mixins.LoginRequiredMixin, FormView):
             return redirect("dashboard:scoreboard")
 
         return super().dispatch(request, *args, **kwargs)
-
-    def get_form_kwargs(self) -> dict[str, Any]:
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
-
-    def form_valid(self, form: UserPersonLinkForm) -> http.HttpResponse:
-        form.save()
-        messages.info(self.request, "Your Discord account has been successfully linked.")
-        return super().form_valid(form)
 
 
 class PersonListView(mixins.LoginRequiredMixin, BreadcrumbsMixin, ListView):

@@ -1,7 +1,5 @@
-import base64
 from typing import Any
 
-from django.core.signing import TimestampSigner
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import exceptions, filters, permissions, serializers, viewsets
@@ -9,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ferry.accounts.models import Person, PersonQuerySet, User
+from ferry.accounts.models import Person, PersonQuerySet
 
 from .serializers import (
     DiscordLinkTokenSerializer,
@@ -87,7 +85,8 @@ class PersonViewset(viewsets.ModelViewSet):
     @extend_schema(
         tags=["People"],
         responses={200: DiscordLinkTokenSerializer},
-        description="This is used by the Discord bot only.",
+        description="This was used by the Discord bot.",
+        deprecated=True,
     )
     @action(detail=True, methods=["GET"], permission_classes=[permissions.IsAuthenticated])
     def fact(self, request: Request, pk: None = None) -> Response:
@@ -95,12 +94,7 @@ class PersonViewset(viewsets.ModelViewSet):
         if not request.user.has_perm("court.act_for_person", person):
             raise exceptions.PermissionDenied("You don't have permission to get a FACT for that person.")
 
-        try:
-            _ = person.user
-            link_token = None
-        except User.DoesNotExist:
-            signer = TimestampSigner()
-            link_token = base64.b64encode(signer.sign(str(person.id)).encode()).decode()
-
-        serializer = DiscordLinkTokenSerializer({"link_token": link_token, "fact": "bees"})
+        serializer = DiscordLinkTokenSerializer(
+            {"link_token": "Sorry, this feature is no longer used. Please login in with your account.", "fact": "bees"}
+        )  # noqa: E501
         return Response(serializer.data)

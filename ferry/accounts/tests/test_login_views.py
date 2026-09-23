@@ -13,7 +13,6 @@ def test_login_page_is_rendered(client: Client) -> None:
     response = client.get(reverse("accounts:login"))
 
     assert response.status_code == 200
-    assert b"Login with SOWN" in response.content
     assert b"Login with Discord" in response.content
 
 
@@ -37,7 +36,7 @@ def test_discord_login_redirects_to_discord_with_callback_url(client: Client) ->
 @pytest.mark.django_db
 def test_discord_callback_logs_in_user_linked_to_discord_id(client: Client) -> None:
     person = Person.objects.create(display_name="Discord User", discord_id=1234)
-    user = User.objects.create_user(username="sown-user", person=person)
+    user = User.objects.create_user(username="user", person=person)
     callback_url = reverse("accounts:sso_discord_redirect")
 
     with (
@@ -82,20 +81,3 @@ def test_discord_callback_creates_user_and_person_for_guild_member(client: Clien
     assert user.username == "discord-1234"
     assert response.status_code == 302
     assert client.session["_auth_user_id"] == str(user.pk)
-
-
-@pytest.mark.django_db
-def test_sown_login_redirects_to_sown_with_callback_url(client: Client) -> None:
-    login_url = reverse("accounts:sown_login")
-    callback_url = reverse("accounts:sso_oidc_redirect")
-
-    with patch("ferry.accounts.views.oauth_config.sown.authorize_redirect") as authorize_redirect:
-        authorize_redirect.return_value = HttpResponseRedirect("https://sso.example/authorize")
-
-        response = client.get(login_url, {"next": "/dashboard/"})
-
-    assert response.status_code == 302
-    assert response["Location"] == "https://sso.example/authorize"
-    assert client.session["sso_next"] == "/dashboard/"
-    request = authorize_redirect.call_args.args[0]
-    assert request.build_absolute_uri(callback_url) == f"http://testserver{callback_url}"

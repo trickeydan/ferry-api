@@ -13,7 +13,6 @@ from ferry.core.http import HttpRequest
 class UserLinkedToPersonMiddleware:
     EXCLUDED_PATHS: set[tuple[str | None, str]] = {
         ("accounts", "logout"),
-        ("accounts", "sso_oidc_redirect"),
         ("accounts", "unlinked_account"),
         (None, "api-v2-docs"),
         (None, "api-v2-schema"),
