@@ -41,7 +41,7 @@ class PubViewset(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self) -> PubQuerySet:
         assert self.request.user.is_authenticated
-        return Pub.objects.for_user(self.request.user)
+        return Pub.objects.for_user(self.request.user).active()
 
 
 class PubEventObjectPermission(permissions.BasePermission):

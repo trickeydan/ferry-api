@@ -13,6 +13,9 @@ class PubQuerySet(models.QuerySet):
     def for_user(self, user: User) -> PubQuerySet:
         return self.all()
 
+    def active(self) -> PubQuerySet:
+        return self.filter(is_active=True)
+
 
 PubManager = models.Manager.from_queryset(PubQuerySet)
 
@@ -25,6 +28,8 @@ class Pub(models.Model):
     menu_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    is_active = models.BooleanField(default=True)
 
     objects = PubManager()
 
