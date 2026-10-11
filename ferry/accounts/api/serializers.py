@@ -5,10 +5,6 @@ from ferry.accounts.models import Person, User
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
 
 
-class DiscordLinkTokenSerializer(serializers.Serializer):
-    link_token = serializers.CharField(required=False)
-
-
 class PersonLinkSerializer(serializers.ModelSerializer[Person]):
     class Meta:
         model = Person

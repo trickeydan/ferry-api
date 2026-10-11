@@ -10,7 +10,6 @@ from rest_framework.response import Response
 from ferry.accounts.models import Person, PersonQuerySet
 
 from .serializers import (
-    DiscordLinkTokenSerializer,
     PersonSerializer,
     UserSerializer,
 )
@@ -81,20 +80,3 @@ class PersonViewset(viewsets.ModelViewSet):
         ):
             raise exceptions.PermissionDenied("You don't have permission to update a Discord ID directly.")
         return super().perform_update(serializer)
-
-    @extend_schema(
-        tags=["People"],
-        responses={200: DiscordLinkTokenSerializer},
-        description="This was used by the Discord bot.",
-        deprecated=True,
-    )
-    @action(detail=True, methods=["GET"], permission_classes=[permissions.IsAuthenticated])
-    def fact(self, request: Request, pk: None = None) -> Response:
-        person = self.get_object()
-        if not request.user.has_perm("court.act_for_person", person):
-            raise exceptions.PermissionDenied("You don't have permission to get a FACT for that person.")
-
-        serializer = DiscordLinkTokenSerializer(
-            {"link_token": "Sorry, this feature is no longer used. Please login in with your account.", "fact": "bees"}
-        )  # noqa: E501
-        return Response(serializer.data)
