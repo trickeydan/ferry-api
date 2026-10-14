@@ -3,7 +3,7 @@ from typing import Never
 from rest_framework import serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
 
-from ferry.accounts.api.serializers import PersonLinkWithDiscordIdSerializer
+from ferry.accounts.api.serializers import PersonLinkForPubEventSerializer
 from ferry.accounts.models import Person
 from ferry.pub.models import Pub, PubEvent, PubEventAttendanceTombstone, PubEventBooking, PubTable
 from ferry.pub.repository import get_attendance_tombstones_for_pub_event, get_attendees_for_pub_event
@@ -66,14 +66,14 @@ class PubEventSerializer(serializers.ModelSerializer):
 
     def get_attendees(self, pub_event: PubEvent) -> ReturnDict:
         attendees = get_attendees_for_pub_event(pub_event)
-        serializer = PersonLinkWithDiscordIdSerializer(read_only=True, many=True, instance=attendees)
+        serializer = PersonLinkForPubEventSerializer(read_only=True, many=True, instance=attendees)
         return serializer.data
 
     def get_tombstoned_attendees(self, pub_event: PubEvent) -> ReturnDict | list[Never]:
         attendance_tombstones = get_attendance_tombstones_for_pub_event(pub_event)
         if not attendance_tombstones.exists():
             return []
-        serializer = PersonLinkWithDiscordIdSerializer(read_only=True, many=True, instance=attendance_tombstones)
+        serializer = PersonLinkForPubEventSerializer(read_only=True, many=True, instance=attendance_tombstones)
         return serializer.data
 
     def get_announcements(self, pub_event: PubEvent) -> list[str]:

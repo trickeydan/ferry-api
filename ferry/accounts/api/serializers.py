@@ -11,7 +11,7 @@ class PersonLinkSerializer(serializers.ModelSerializer[Person]):
         fields: tuple[str, ...] = ("id", "display_name")
 
 
-class PersonLinkWithDiscordIdSerializer(serializers.ModelSerializer[Person]):
+class PersonLinkForPubEventSerializer(serializers.ModelSerializer[Person]):
     class Meta(PersonLinkSerializer.Meta):
         model = Person
         fields = PersonLinkSerializer.Meta.fields + ("discord_id",)
