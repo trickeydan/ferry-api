@@ -8,8 +8,8 @@ from ferry.accounts.models import APIToken, Person, User
 
 class PersonAdmin(admin.ModelAdmin):
     readonly_fields = ("id", "created_at", "updated_at")
-    fields = ("id", "display_name", "discord_id", "autopub", "created_at", "updated_at")
-    list_display = ("display_name", "discord_id", "autopub")
+    fields = ("id", "display_name", "discord_id", "autopub", "pub_booking_priority", "created_at", "updated_at")
+    list_display = ("display_name", "discord_id", "autopub", "pub_booking_priority")
 
 
 class InlineAPITokenAdmin(admin.TabularInline):

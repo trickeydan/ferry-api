@@ -90,6 +90,11 @@ class Person(models.Model):
     display_name = models.CharField(max_length=255, unique=True)
     discord_id = models.BigIntegerField(verbose_name="Discord ID", blank=True, null=True, unique=True)
     autopub = models.BooleanField(default=False, verbose_name="AutoPub enabled")
+    pub_booking_priority = models.SmallIntegerField(
+        default=0,
+        verbose_name="Pub booking priority",
+        help_text="Higher numbers are higher priority. This is used to determine who gets reminded to book a table.",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
