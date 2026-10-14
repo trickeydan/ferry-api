@@ -106,7 +106,7 @@ class Person(models.Model):
     def clean_fields(self, exclude: Collection[str] | None = None) -> None:
         super().clean_fields(exclude)
 
-        if self.discord_id:
+        if self.discord_id and not settings.DEBUG:
             discord_client = get_discord_client()
             try:
                 discord_client.get_guild_member_by_id(settings.DISCORD_GUILD, self.discord_id)
