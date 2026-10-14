@@ -12,7 +12,7 @@ from ferry.pub.repository import get_attendance_tombstones_for_pub_event, get_at
 class PubSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pub
-        fields = ("id", "name", "emoji", "map_url", "menu_url")
+        fields = ("id", "name", "emoji", "map_url", "menu_url", "booking_url")
 
 
 class PubLinkSerializer(serializers.ModelSerializer):
@@ -41,11 +41,13 @@ class PubEventBookingCreateSerializer(serializers.Serializer):
 
 
 class PubEventSerializer(serializers.ModelSerializer):
+    pub = PubSerializer()
     attendees = serializers.SerializerMethodField("get_attendees")
     tombstoned_attendees = serializers.SerializerMethodField("get_tombstoned_attendees")
     announcements = serializers.SerializerMethodField("get_announcements")
     table = PubTableSerializer(read_only=True)
     booking = PubEventBookingSerializer(read_only=True)
+    expected_booker = serializers.SerializerMethodField("get_expected_booker")
 
     class Meta:
         model = PubEvent
@@ -59,6 +61,7 @@ class PubEventSerializer(serializers.ModelSerializer):
             "tombstoned_attendees",
             "announcements",
             "booking",
+            "expected_booker",
             "created_by",
             "created_at",
             "updated_at",
@@ -79,6 +82,23 @@ class PubEventSerializer(serializers.ModelSerializer):
     def get_announcements(self, pub_event: PubEvent) -> list[str]:
         extra_infos = pub_event.extra_info.order_by("created_at").all()
         return [ei.formatted_info for ei in extra_infos]
+
+    def get_expected_booker(self, pub_event: PubEvent) -> ReturnDict | None:
+        if PubEventBooking.objects.filter(pub_event=pub_event).exists():
+            return None
+
+        attendees = get_attendees_for_pub_event(pub_event)
+        attendees_with_discord = {attendee for attendee in attendees if attendee.discord_id is not None}
+
+        # Sort in Python to avoid additional query
+        sorted_attendees = sorted(attendees_with_discord, key=lambda p: p.pub_booking_priority, reverse=True)
+        if not sorted_attendees:
+            return None
+
+        expected_booker = sorted_attendees[0]
+
+        serializer = PersonLinkForPubEventSerializer(read_only=True, instance=expected_booker)
+        return serializer.data
 
 
 class PublicPubEventSerializer(serializers.ModelSerializer):
