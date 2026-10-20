@@ -1,4 +1,4 @@
-from typing import Never
+from typing import Any, Never
 
 from rest_framework import serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
@@ -13,6 +13,14 @@ class PubSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pub
         fields = ("id", "name", "emoji", "map_url", "menu_url", "booking_url")
+
+
+class PubEventPubField(serializers.PrimaryKeyRelatedField):
+    def use_pk_only_optimization(self) -> bool:
+        return False
+
+    def to_representation(self, value: Any) -> ReturnDict:
+        return PubSerializer(instance=value).data
 
 
 class PubLinkSerializer(serializers.ModelSerializer):
@@ -41,7 +49,7 @@ class PubEventBookingCreateSerializer(serializers.Serializer):
 
 
 class PubEventSerializer(serializers.ModelSerializer):
-    pub = PubSerializer()
+    pub = PubEventPubField(queryset=Pub.objects.all())
     attendees = serializers.SerializerMethodField("get_attendees")
     tombstoned_attendees = serializers.SerializerMethodField("get_tombstoned_attendees")
     announcements = serializers.SerializerMethodField("get_announcements")
