@@ -12,7 +12,7 @@ from ferry.pub.repository import get_attendance_tombstones_for_pub_event, get_at
 class PubSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pub
-        fields = ("id", "name", "emoji", "map_url", "menu_url", "booking_url")
+        fields = ("id", "name", "emoji", "map_url", "menu_url", "booking_url", "is_default")
 
 
 class PubEventPubField(serializers.PrimaryKeyRelatedField):

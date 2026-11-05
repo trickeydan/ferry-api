@@ -20,7 +20,7 @@ from ferry.pub.models import (
 class PubAdminForm(forms.ModelForm):
     class Meta:
         model = Pub
-        fields = ("name", "emoji", "is_active", "map_url", "menu_url")
+        fields = ("name", "emoji", "is_active", "is_default", "map_url", "menu_url")
         widgets = {
             "emoji": EmojiPickerTextInputAdmin(),
         }
@@ -28,9 +28,20 @@ class PubAdminForm(forms.ModelForm):
 
 class PubAdmin(admin.ModelAdmin):
     readonly_fields = ("id", "created_at", "updated_at")
-    fields = ("id", "name", "emoji", "is_active", "map_url", "menu_url", "booking_url", "created_at", "updated_at")
-    list_display = ("name", "emoji", "is_active")
-    list_filter = ("is_active",)
+    fields = (
+        "id",
+        "name",
+        "emoji",
+        "is_active",
+        "is_default",
+        "map_url",
+        "menu_url",
+        "booking_url",
+        "created_at",
+        "updated_at",
+    )
+    list_display = ("name", "emoji", "is_active", "is_default")
+    list_filter = ("is_active", "is_default")
     form = PubAdminForm
 
 

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 from ferry.accounts.models import User
@@ -31,11 +32,29 @@ class Pub(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     is_active = models.BooleanField(default=True)
+    is_default = models.BooleanField(default=False)
 
     objects = PubManager()
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                "is_default",
+                condition=models.Q(is_default=True),
+                name="unique_default_pub",
+                violation_error_message="Another pub is already the default",
+            )
+        ]
+
     def __str__(self) -> str:
         return f"{self.name} {self.emoji}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        # Making this pub the default demotes the current default.
+        with transaction.atomic():
+            if self.is_default:
+                Pub.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+            super().save(*args, **kwargs)
 
 
 class PubTable(models.Model):

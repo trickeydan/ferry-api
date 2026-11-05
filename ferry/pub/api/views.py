@@ -38,6 +38,8 @@ from ferry.pub.models import (
 )
 class PubViewset(viewsets.ReadOnlyModelViewSet):
     serializer_class = PubSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ("is_default",)
 
     def get_queryset(self) -> PubQuerySet:
         assert self.request.user.is_authenticated

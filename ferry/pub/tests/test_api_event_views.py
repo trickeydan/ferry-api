@@ -41,4 +41,5 @@ class TestPubEventCreateEndpoint(APITest):
             "map_url": pub.map_url,
             "menu_url": "",
             "booking_url": "",
+            "is_default": False,
         }
