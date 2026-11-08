@@ -157,6 +157,14 @@ class TestFerriesPages:
         assert list(response.context["my_consequences"]) == [consequence]
         assert len(response.context["recent_accusations"]) == 1
 
+    def test_overview_scoreboard_shows_top_ten(self, client: Client, user_with_person: User) -> None:
+        AccusationFactory.create_batch(12)
+        client.force_login(user_with_person)
+
+        response = client.get(reverse("dashboard:ferries-overview"))
+
+        assert len(response.context["scoreboard"]) == 10
+
     def test_overview_redirects_unlinked_users(self, client: Client, user: User) -> None:
         client.force_login(user)
 

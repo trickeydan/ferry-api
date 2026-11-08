@@ -9,6 +9,7 @@ from django.views.generic import ListView, TemplateView
 from ferry.accounts.models import Person, PersonQuerySet, User
 from ferry.core.mixins import BreadcrumbsMixin
 from ferry.court.models import Accusation, Consequence
+from ferry.dashboard.services import get_score_sparkline_data
 from ferry.pub.repository import get_next_pub_summary
 
 
@@ -60,8 +61,11 @@ class FerriesOverviewView(LoginRequiredMixin, BreadcrumbsMixin, TemplateView):
                 .order_by("content")[:5]
             )
 
+        scoreboard = list(get_scoreboard(self.request.user)[:10])
+
         return super().get_context_data(
-            scoreboard=get_scoreboard(self.request.user)[:5],
+            scoreboard=scoreboard,
+            score_sparkline=get_score_sparkline_data([person.display_name for person in scoreboard[:3]]),
             recent_accusations=get_recent_accusations(self.request.user)[:3],
             my_consequences=my_consequences,
             **kwargs,

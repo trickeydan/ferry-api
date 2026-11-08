@@ -8,7 +8,7 @@
     <div class="col-lg-7">
       <div class="card h-100">
         <div class="card-header d-flex justify-content-between align-items-baseline">
-          <h2 class="h6 mb-0">Scoreboard &middot; top 5</h2>
+          <h2 class="h6 mb-0">Scoreboard &middot; top 10</h2>
           <a href="{% url 'dashboard:scoreboard' %}">Full scoreboard &rarr;</a>
         </div>
         <div class="card-body">
@@ -22,8 +22,43 @@
         </div>
       </div>
     </div>
-    <div class="col-lg-5">
-      <div class="card h-100">
+    <div class="col-lg-5 d-flex flex-column gap-4">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-baseline">
+          <h2 class="h6 mb-0">Score history</h2>
+          <a href="{% url 'dashboard:score-history' %}">Full history &rarr;</a>
+        </div>
+        <div class="card-body">
+          {% if score_sparkline %}
+            <svg class="w-100" viewBox="0 0 {{ score_sparkline.width }} {{ score_sparkline.height }}" role="img" aria-label="Ratified accusations per academic year from {{ score_sparkline.first_label }} to {{ score_sparkline.last_label }} for the top {{ score_sparkline.series|length }} on the scoreboard">
+              <g fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+                {% for series in score_sparkline.series %}
+                  <polyline points="{{ series.points }}" stroke="var(--bs-{{ series.color }})"/>
+                {% endfor %}
+              </g>
+              {% for series in score_sparkline.series %}
+                <circle cx="{{ series.end_x }}" cy="{{ series.end_y }}" r="3" fill="var(--bs-{{ series.color }})"/>
+              {% endfor %}
+            </svg>
+            <div class="d-flex justify-content-between text-body-secondary small">
+              <span>{{ score_sparkline.first_label }}</span>
+              <span>{{ score_sparkline.last_label }}</span>
+            </div>
+            <ul class="list-unstyled small mb-0 mt-2">
+              {% for series in score_sparkline.series %}
+                <li class="d-flex justify-content-between">
+                  <span><span class="badge text-bg-{{ series.color }}">&nbsp;</span> {{ series.label }}</span>
+                  <span>{{ series.latest }} this year</span>
+                </li>
+              {% endfor %}
+            </ul>
+            <p class="small text-body-secondary mb-0 mt-2">Ratified accusations per academic year, for the top {{ score_sparkline.series|length }}.</p>
+          {% else %}
+            <p class="mb-0">Not enough history to draw a trend yet. It needs at least two academic years.</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card flex-grow-1">
         <div class="card-header d-flex justify-content-between align-items-baseline">
           <h2 class="h6 mb-0">My consequences</h2>
           <a href="{% url 'court:consequence-list' %}">Manage &rarr;</a>
