@@ -9,6 +9,7 @@
     <thead>
       <tr>
         <th scope="col">Name</th>
+        <th scope="col">Pub streak</th>
         <th scope="col"></th>
       </tr>
     </thead>
@@ -16,6 +17,7 @@
       {% for person in object_list %}
         <tr>
           <th scope="row">{{ person.display_name }}</th>
+          <td>{{ person.pub_streak }}</td>
           <td><a href="{% url 'accounts:person-detail' person.id %}">View</a></td>
         </tr>
       {% endfor %}

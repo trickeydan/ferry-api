@@ -4,13 +4,15 @@ import math
 import secrets
 import uuid
 from collections.abc import Collection
+from datetime import UTC, datetime
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import F, Func, Value
+from django.db.models import Exists, F, Func, IntegerField, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 from ferry.accounts.repository import ferrify
 from ferry.core.discord import NoSuchGuildMemberError, get_discord_client
@@ -80,6 +82,34 @@ class PersonQuerySet(models.QuerySet["Person"]):
                 Value(0, output_field=SCORE_FIELD),
             )
         )
+
+    def with_pub_streak(self, *, now: datetime | None = None) -> PersonQuerySet:
+        """Annotate `pub_streak`: how many past pub events in a row each person is marked as attending.
+
+        A streak is the number of past events since the most recent one the person wasn't attending.
+        Events that haven't happened yet don't count.
+        """
+        from ferry.pub.models import PubEvent, PubEventRSVP  # noqa: PLC0415
+
+        past_events = PubEvent.objects.filter(timestamp__lte=now or timezone.now())
+        attended = PubEventRSVP.objects.filter(
+            pub_event=OuterRef("pk"), person=OuterRef(OuterRef("pk")), is_attending=True
+        )
+        last_missed_event = (
+            past_events.annotate(attended=Exists(attended))
+            .filter(attended=False)
+            .order_by("-timestamp")
+            .values("timestamp")[:1]
+        )
+        events_since_last_miss = (
+            past_events.filter(timestamp__gt=OuterRef("last_missed_at"))
+            .order_by()
+            .annotate(count=Func(F("id"), function="Count", output_field=IntegerField()))
+            .values("count")
+        )
+        return self.annotate(
+            last_missed_at=Coalesce(Subquery(last_missed_event), Value(datetime(1970, 1, 1, tzinfo=UTC))),
+        ).annotate(pub_streak=Coalesce(Subquery(events_since_last_miss, output_field=IntegerField()), 0))
 
 
 PersonManager = models.Manager.from_queryset(PersonQuerySet)

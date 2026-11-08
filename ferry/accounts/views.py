@@ -107,6 +107,7 @@ class PersonListView(mixins.LoginRequiredMixin, BreadcrumbsMixin, ListView):
     def get_queryset(self) -> PersonQuerySet:
         assert self.request.user.is_authenticated
         qs = Person.objects.for_user(self.request.user)
+        qs = qs.with_pub_streak()
         qs = qs.order_by(models.functions.Lower("display_name"))
         return qs
 
@@ -125,6 +126,7 @@ class PersonDetailView(mixins.LoginRequiredMixin, BreadcrumbsMixin, DetailView):
         qs = cast(PersonQuerySet, super().get_queryset())
         qs = qs.with_current_score()
         qs = qs.with_num_ratified_accusations()
+        qs = qs.with_pub_streak()
         return qs
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
