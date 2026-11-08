@@ -37,7 +37,7 @@ class PersonSerializer(serializers.ModelSerializer[Person]):
         )
 
     def validate_discord_id(self, value: int | None) -> int | None:
-        if value:
+        if value and not settings.DEBUG:
             discord_client = get_discord_client()
             try:
                 discord_client.get_guild_member_by_id(settings.DISCORD_GUILD, value)
