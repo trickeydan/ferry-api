@@ -63,6 +63,7 @@ def plenty_of_data(current_user: User) -> None:
     ConsequenceFactory.create(
         content="Wear the captain's hat to the next three pub nights", created_by=person_of(current_user)
     )
+    current_user.api_tokens.create(name="Discord bot", is_active=True)
 
 
 @then(parsers.parse("the chart should have {count:d} lines"))

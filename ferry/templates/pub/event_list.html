@@ -9,21 +9,23 @@
   <h2 class="h4">Events</h2>
   <p>The following pub events are recorded:</p>
   {% if object_list %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th scope="col">Date</th>
-          <th scope="col">Location</th>
-          <th scope="col">Attendees</th>
-          <th scope="col">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for pub_event in object_list %}
-          {% include "pub/event_list__table_row.html" %}
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Location</th>
+            <th scope="col">Attendees</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pub_event in object_list %}
+            {% include "pub/event_list__table_row.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     {% include "inc/pagination.html" %}
   {% else %}
     <p>There are no pub events.</p>

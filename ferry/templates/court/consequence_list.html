@@ -16,21 +16,23 @@
   </p>
   <hr>
   {% if object_list %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th scope="col">Consequence</th>
-          <th scope="col">Enabled</th>
-          <th scope="col">Victim Count</th>
-          <th scope="col">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for consequence in object_list %}
-          {% include "court/consequence_list__table_row.html" %}
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Consequence</th>
+            <th scope="col">Enabled</th>
+            <th scope="col">Victim Count</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for consequence in object_list %}
+            {% include "court/consequence_list__table_row.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   {% else %}
     <p>You have not created any consequences.</p>
   {% endif %}

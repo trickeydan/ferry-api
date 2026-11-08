@@ -13,7 +13,7 @@ Feature: Using the site on a phone
     Given I am signed in as a member
     And the app has plenty of data
     And the next pub is at "The Anchor and Hope Public House"
-    And I am using a phone
+    And I am using a phone with large text
     When I open "<path>"
     Then the page should not scroll sideways
 
@@ -28,3 +28,5 @@ Feature: Using the site on a phone
       | /pub/events            |
       | /pub/pubs/             |
       | /accounts/people/      |
+      | /accounts/profile/     |
+      | /accounts/profile/api-tokens/ |

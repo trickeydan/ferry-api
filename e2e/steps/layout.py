@@ -11,6 +11,15 @@ def using_a_phone(page: Page) -> None:
     page.set_viewport_size(PHONE)
 
 
+@given("I am using a phone with large text")
+def using_a_phone_with_large_text(page: Page) -> None:
+    """Text is wider on some machines, such as Linux in CI, so check that pages still fit when it is larger."""
+    page.set_viewport_size(PHONE)
+    page.add_init_script(
+        "document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '19px' })"
+    )
+
+
 @when("I open the menu")
 def open_menu(page: Page) -> None:
     page.get_by_role("button", name="Toggle navigation").click()
