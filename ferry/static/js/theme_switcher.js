@@ -62,7 +62,7 @@ const themeSwitcher = new ThemeSwitcher();
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     const storedTheme = themeSwitcher.getStoredTheme()
     if (storedTheme !== 'light' && storedTheme !== 'dark') {
-        setTheme(getPreferredTheme())
+        themeSwitcher.setTheme(themeSwitcher.getPreferredTheme())
     }
 })
 

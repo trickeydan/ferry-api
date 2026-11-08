@@ -9,22 +9,24 @@
 
 {% block content %}
   {{ block.super }}
-  <table class="table">
-    <thead>
-      <tr>
-        <th scope="col">Name</th>
-        <th scope="col">Token</th>
-        <th scope="col">Active?</th>
-        <th scope="col">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for api_token in object_list %}
-        {% include "accounts/api_tokens__table_row.html" %}
-      {% empty %}
-        <p>You do not have any API Tokens.</p>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Token</th>
+          <th scope="col">Active?</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for api_token in object_list %}
+          {% include "accounts/api_tokens__table_row.html" %}
+        {% empty %}
+          <p>You do not have any API Tokens.</p>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% django_htmx_script %}
 {% endblock %}
