@@ -10,7 +10,7 @@ from ferry.accounts.models import Person, PersonQuerySet, User
 from ferry.core.mixins import BreadcrumbsMixin
 from ferry.court.models import Accusation, Consequence
 from ferry.dashboard.services import get_score_sparkline_data
-from ferry.pub.repository import get_next_pub_summary
+from ferry.pub.repository import get_next_pub_summary, get_pub_stats
 
 
 def get_scoreboard(user: User) -> PersonQuerySet:
@@ -38,8 +38,9 @@ class HomeView(LoginRequiredMixin, BreadcrumbsMixin, TemplateView):
         assert self.request.user.is_authenticated
 
         return super().get_context_data(
-            scoreboard=get_scoreboard(self.request.user)[:3],
+            scoreboard=get_scoreboard(self.request.user)[:6],
             latest_accusation=get_recent_accusations(self.request.user).first(),
+            pub_stats=get_pub_stats(),
             **get_next_pub_summary(self.request.user.person),
             **kwargs,
         )

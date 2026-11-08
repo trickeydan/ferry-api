@@ -203,6 +203,14 @@ class TestFerriesPages:
 
 @pytest.mark.django_db
 class TestHome:
+    def test_scoreboard_shows_top_six(self, client: Client, user_with_person: User) -> None:
+        AccusationFactory.create_batch(8)
+        client.force_login(user_with_person)
+
+        response = client.get(reverse("dashboard:home"))
+
+        assert len(response.context["scoreboard"]) == 6
+
     def test_home_hub(self, client: Client, user_with_person: User) -> None:
         AccusationFactory()
         client.force_login(user_with_person)
@@ -211,7 +219,7 @@ class TestHome:
 
         assert response.status_code == HTTPStatus.OK
         assert response.context["latest_accusation"] is not None
-        assert len(response.context["scoreboard"]) <= 3
+        assert len(response.context["scoreboard"]) <= 6
 
 
 @pytest.mark.django_db

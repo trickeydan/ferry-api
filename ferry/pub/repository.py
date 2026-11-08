@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import Any
 
 from django.db import models
 from django.db.models.functions import Lower
+from django.utils import timezone
 
 from ferry.accounts.models import Person, PersonQuerySet, User
 from ferry.pub.forms import PubEventBookingForm
@@ -78,4 +80,24 @@ def get_next_pub_summary(person: Person | None) -> dict[str, Any]:
         "next_event_attendee_count": next_event_attendee_count,
         "has_upcoming_tombstone": has_upcoming_tombstone,
         "person": person,
+    }
+
+
+def get_pub_stats(*, now: datetime | None = None) -> dict[str, Any]:
+    """Events held so far in the current academic year (1 September to 31 August) and their average attendance.
+
+    Events that haven't happened yet are left out, as their attendance isn't final.
+    """
+    now = timezone.localtime(now or timezone.now())
+    start_year = now.year if now.month >= 9 else now.year - 1
+    start = datetime(start_year, 9, 1, tzinfo=now.tzinfo)
+
+    events = PubEvent.objects.filter(timestamp__gte=start, timestamp__lte=now)
+    event_count = events.count()
+    attendances = PubEventRSVP.objects.filter(pub_event__in=events, is_attending=True).count()
+
+    return {
+        "academic_year": f"{start_year}/{str(start_year + 1)[-2:]}",
+        "event_count": event_count,
+        "average_attendees": attendances / event_count if event_count else None,
     }
