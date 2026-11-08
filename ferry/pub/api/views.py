@@ -1,6 +1,6 @@
 from typing import Any
 
-from django.db import models, transaction
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, permissions, viewsets
@@ -30,6 +30,7 @@ from ferry.pub.models import (
     PubQuerySet,
     PubTable,
 )
+from ferry.pub.services import TombstoneAlreadyExistsError, skip_next_pub
 
 
 @extend_schema_view(
@@ -260,34 +261,12 @@ class PubEventViewset(
         tombstone_info = PubEventAttendanceTombstoneCreateSerializer(data=request.data)
         tombstone_info.is_valid(raise_exception=True)
 
-        with transaction.atomic():
-            # Get the next pub event, if there is one.
-            # If there is one, we will automatically link the tombstone to the event.
-            pub_event = PubEvent.objects.get_next()
-
-            # Check if the person already has a tombstone
-            if (
-                PubEventAttendanceTombstone.objects.filter(person=tombstone_info.validated_data["person"])
-                .filter(models.Q(pub_event=pub_event) if pub_event else models.Q(pub_event__isnull=True))
-                .exists()
-            ):
-                return Response(
-                    {"error": "This person already has a tombstone for this event or the next pub."}, status=409
-                )
-
-            tombstone = PubEventAttendanceTombstone.objects.create(
-                pub_event=pub_event,
-                person=tombstone_info.validated_data["person"],
+        try:
+            tombstone = skip_next_pub(tombstone_info.validated_data["person"])
+        except TombstoneAlreadyExistsError:
+            return Response(
+                {"error": "This person already has a tombstone for this event or the next pub."}, status=409
             )
-
-            # Update any RSVPs using AutoPub for the event, if it exists.
-            if pub_event:
-                rsvps = PubEventRSVP.objects.filter(
-                    pub_event=pub_event,
-                    person=tombstone_info.validated_data["person"],
-                    method=PubEventRSVPMethod.AUTO,
-                )
-                rsvps.update(method=PubEventRSVPMethod.TOMBSTONE, is_attending=False)
 
         serializer = PubEventAttendanceTombstoneSerializer(instance=tombstone)
         return Response(serializer.data)

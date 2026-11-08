@@ -4,7 +4,7 @@ from uuid import UUID
 from django import http
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -14,11 +14,13 @@ from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django.views.generic.detail import SingleObjectMixin
 from rules.contrib.views import PermissionRequiredMixin
 
+from ferry.accounts.models import Person
 from ferry.core.http import HttpRequest
 from ferry.core.mixins import BreadcrumbsMixin
 from ferry.pub.forms import PubEventRSVPManualEntryForm
 from ferry.pub.models import (
     PubEvent,
+    PubEventAttendanceTombstone,
     PubEventBooking,
     PubEventQuerySet,
     PubEventRSVP,
@@ -30,6 +32,7 @@ from ferry.pub.repository import (
     get_next_pub_summary,
     get_pub_booking_form,
 )
+from ferry.pub.services import TombstoneAlreadyExistsError, set_autopub, skip_next_pub, undo_skip_next_pub
 
 
 class PubEventListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
@@ -159,6 +162,15 @@ class UpdatePubEventResponseView(LoginRequiredMixin, View):
                 elif rsvp.method == PubEventRSVPMethod.WEB:
                     rsvp.is_attending = not rsvp.is_attending
                     rsvp.save()
+                elif rsvp.method == PubEventRSVPMethod.TOMBSTONE:
+                    # Coming after skipping is an explicit yes, so the skip no longer applies.
+                    with transaction.atomic():
+                        PubEventAttendanceTombstone.objects.filter(
+                            pub_event=pub_event, person=request.user.person
+                        ).delete()
+                        rsvp.method = PubEventRSVPMethod.WEB
+                        rsvp.is_attending = True
+                        rsvp.save()
                 else:
                     # This should be unreachable
                     pass
@@ -227,3 +239,67 @@ class PubEventManualRSVPView(
         )
         messages.success(self.request, f"Marked {person} as present")
         return redirect("pub:events-detail", form.pub_event.id)
+
+
+class AutoPubFragmentsMixin(LoginRequiredMixin):
+    """Shared by the htmx views that change AutoPub or skip state.
+
+    The next-pub card and the AutoPub card both depend on that state, so each response swaps in
+    the card that was clicked and updates the other one out-of-band when it is on the page.
+    """
+
+    def post_checks(self, request: HttpRequest) -> Person:
+        assert request.user.is_authenticated
+        assert request.user.person
+
+        if not request.htmx:
+            raise SuspiciousOperation("That request is not valid.")
+
+        return request.user.person
+
+    def render_fragments(self, request: HttpRequest, person: Person, *, target: str) -> http.HttpResponse:
+        on_overview = request.htmx.current_url_abs_path == reverse("pub:overview")
+        return render(
+            request,
+            "pub/inc/autopub_fragments.html",
+            {
+                **get_next_pub_summary(person),
+                "oob_next_card": target != "next",
+                "show_autopub_card": target == "autopub" or on_overview,
+                "oob_autopub_card": target != "autopub",
+            },
+        )
+
+
+class SkipNextPubView(AutoPubFragmentsMixin, View):
+    def post(self, request: HttpRequest) -> http.HttpResponse:
+        person = self.post_checks(request)
+
+        if not person.autopub:
+            raise PermissionDenied("Only people using AutoPub can skip a pub.")
+
+        try:
+            skip_next_pub(person)
+        except TombstoneAlreadyExistsError:
+            pass  # Already skipped, so there is nothing more to do.
+
+        return self.render_fragments(request, person, target="next")
+
+
+class UndoSkipNextPubView(AutoPubFragmentsMixin, View):
+    def post(self, request: HttpRequest) -> http.HttpResponse:
+        person = self.post_checks(request)
+        undo_skip_next_pub(person)
+        return self.render_fragments(request, person, target="next")
+
+
+class SetAutoPubView(AutoPubFragmentsMixin, View):
+    def post(self, request: HttpRequest) -> http.HttpResponse:
+        person = self.post_checks(request)
+
+        enabled = request.POST.get("enabled")
+        if enabled not in ("0", "1"):
+            raise SuspiciousOperation("That request is not valid.")
+
+        set_autopub(person, enabled=enabled == "1")
+        return self.render_fragments(request, person, target="autopub")

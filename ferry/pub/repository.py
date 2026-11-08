@@ -5,7 +5,7 @@ from django.db.models.functions import Lower
 
 from ferry.accounts.models import Person, PersonQuerySet
 from ferry.pub.forms import PubEventBookingForm
-from ferry.pub.models import PubEvent, PubEventAttendanceTombstone, PubEventQuerySet, PubEventRSVP
+from ferry.pub.models import PubEvent, PubEventAttendanceTombstone, PubEventQuerySet, PubEventRSVP, PubEventRSVPMethod
 
 
 def get_attendees_for_pub_event(pub_event: PubEvent) -> PersonQuerySet:
@@ -48,7 +48,19 @@ def get_next_pub_summary(person: Person | None) -> dict[str, Any]:
             person=person, pub_event__isnull=True
         ).exists()
 
+    # Skipping is part of AutoPub, so it is only on offer to people who have it on.
+    if next_event:
+        rsvp_method = next_event_rsvp.method if next_event_rsvp else None
+        can_skip = rsvp_method == PubEventRSVPMethod.AUTO
+        can_undo_skip = rsvp_method == PubEventRSVPMethod.TOMBSTONE
+    else:
+        can_skip = not has_upcoming_tombstone
+        can_undo_skip = has_upcoming_tombstone
+    autopub_enabled = bool(person and person.autopub)
+
     return {
+        "can_skip": autopub_enabled and can_skip,
+        "can_undo_skip": autopub_enabled and can_undo_skip,
         "next_event": next_event,
         "next_event_rsvp": next_event_rsvp,
         "next_event_attendee_count": next_event_attendee_count,

@@ -1,0 +1,47 @@
+<div id="autopub-card" class="card h-100" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <div class="card-header">
+    <h2 class="h6 mb-0">Your AutoPub</h2>
+  </div>
+  <div class="card-body d-flex flex-column gap-3">
+    {% if person.autopub %}
+      <div>
+        <span class="badge text-bg-success">On</span>
+        <p class="mt-2 mb-0 text-body-secondary">You are automatically marked as attending when a pub event is created.</p>
+      </div>
+      {% if can_skip or can_undo_skip %}
+        <div>
+          {% if can_undo_skip %}
+            <p class="mb-2">You are skipping the next pub.</p>
+            {% include "pub/inc/skip_button.html" %}
+          {% else %}
+            <p class="mb-2">Can't make the next pub? You can skip it, even before it has been chosen.</p>
+            {% include "pub/inc/skip_button.html" %}
+          {% endif %}
+        </div>
+      {% endif %}
+      <div>
+        <button class="btn btn-sm btn-outline-secondary"
+                hx-post="{% url 'pub:autopub' %}"
+                hx-vals='{"enabled": "0"}'
+                hx-target="#autopub-card"
+                hx-swap="outerHTML">
+          Turn off AutoPub
+        </button>
+      </div>
+    {% else %}
+      <div>
+        <span class="badge text-bg-secondary">Off</span>
+        <p class="mt-2 mb-0 text-body-secondary">Turn on AutoPub to be marked as attending automatically, and to be able to skip pubs you can't make.</p>
+      </div>
+      <div>
+        <button class="btn btn-sm btn-success"
+                hx-post="{% url 'pub:autopub' %}"
+                hx-vals='{"enabled": "1"}'
+                hx-target="#autopub-card"
+                hx-swap="outerHTML">
+          Turn on AutoPub
+        </button>
+      </div>
+    {% endif %}
+  </div>
+</div>

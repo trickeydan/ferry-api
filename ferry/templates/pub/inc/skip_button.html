@@ -1,0 +1,15 @@
+{% if can_undo_skip %}
+  <button class="btn btn-sm btn-outline-warning"
+          hx-post="{% url 'pub:undo-skip-next' %}"
+          hx-target="#next-pub-card"
+          hx-swap="outerHTML">
+    Undo skip
+  </button>
+{% elif can_skip %}
+  <button class="btn btn-sm btn-outline-warning"
+          hx-post="{% url 'pub:skip-next' %}"
+          hx-target="#next-pub-card"
+          hx-swap="outerHTML">
+    Skip next pub
+  </button>
+{% endif %}

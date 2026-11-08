@@ -1,4 +1,4 @@
-<div class="card mb-4">
+<div id="next-pub-card" class="card mb-4" {% if oob %}hx-swap-oob="true"{% endif %}>
   <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
     {% if next_event %}
       <div>
@@ -20,6 +20,7 @@
         {% else %}
           <span class="badge text-bg-secondary">You're not going</span>
         {% endif %}
+        {% include "pub/inc/skip_button.html" %}
         <a class="btn btn-primary" href="{% url 'pub:events-detail' next_event.id %}">View details</a>
       </div>
     {% else %}
@@ -36,6 +37,7 @@
         {% elif person.autopub %}
           <span class="badge text-bg-success">AutoPub will add you</span>
         {% endif %}
+        {% include "pub/inc/skip_button.html" %}
         <a class="btn btn-outline-primary" href="{% url 'pub:events-list' %}">Pub events</a>
       </div>
     {% endif %}
