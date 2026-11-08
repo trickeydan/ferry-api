@@ -1,6 +1,10 @@
 docker-compose.override.yml
 fixture-*.json
 
+# Playwright failure screenshots and traces
+e2e/test-results/
+e2e/report/
+
 ### Django ###
 *.log
 *.pot
