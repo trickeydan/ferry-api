@@ -1,0 +1,13 @@
+{% extends "base_pub.html" %}
+
+{% block title %}Pubs{% endblock %}
+
+{% block buttons %}
+  <a class="btn btn-success" href="{% url 'pub:pubs-create' %}">New Pub</a>
+{% endblock %}
+
+{% block content %}
+  {{ block.super }}
+  <p>Pubs that can host a pub event. Anyone can add one. Only admins can choose the default pub.</p>
+  {% include "pub/inc/pubs_table.html" with pubs=object_list show_actions=True %}
+{% endblock %}

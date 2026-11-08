@@ -5,9 +5,30 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from django import forms
 from django.urls import reverse
+from emoji_picker.widgets import EmojiPickerTextInput
 
 from ferry.accounts.models import Person
-from ferry.pub.models import PubEvent
+from ferry.pub.models import Pub, PubEvent
+
+
+class PubForm(forms.ModelForm):
+    class Meta:
+        model = Pub
+        fields = ("name", "emoji", "map_url", "menu_url", "booking_url")
+        widgets = {"emoji": EmojiPickerTextInput()}
+        error_messages = {"emoji": {"max_length": "Pick a single emoji."}}
+        help_texts = {
+            "emoji": "Click the smiley to pick an emoji.",
+            "map_url": "A link to the pub on a map.",
+            "menu_url": "Optional.",
+            "booking_url": "Optional. Where to book a table.",
+        }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.add_input(Submit("submit", "Add Pub" if self.instance._state.adding else "Save"))
 
 
 class PubEventBookingForm(forms.Form):

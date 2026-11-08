@@ -3,9 +3,16 @@ from typing import Any
 from django.db import models
 from django.db.models.functions import Lower
 
-from ferry.accounts.models import Person, PersonQuerySet
+from ferry.accounts.models import Person, PersonQuerySet, User
 from ferry.pub.forms import PubEventBookingForm
-from ferry.pub.models import PubEvent, PubEventAttendanceTombstone, PubEventQuerySet, PubEventRSVP, PubEventRSVPMethod
+from ferry.pub.models import (
+    Pub,
+    PubEvent,
+    PubEventAttendanceTombstone,
+    PubEventQuerySet,
+    PubEventRSVP,
+    PubEventRSVPMethod,
+)
 
 
 def get_attendees_for_pub_event(pub_event: PubEvent) -> PersonQuerySet:
@@ -30,6 +37,11 @@ def annotate_attendee_count(pub_event_qs: PubEventQuerySet) -> PubEventQuerySet:
 
 def get_pub_booking_form(pub_event: PubEvent, *, data: Any | None = None) -> PubEventBookingForm:
     return PubEventBookingForm(data=data, pub_event=pub_event)
+
+
+def get_listed_pubs(user: User) -> models.QuerySet[Pub]:
+    """Active pubs, with the default pub first."""
+    return Pub.objects.for_user(user).active().order_by("-is_default", Lower("name"))
 
 
 def get_next_pub_summary(person: Person | None) -> dict[str, Any]:

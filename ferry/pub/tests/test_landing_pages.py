@@ -128,7 +128,7 @@ class TestPubOverview:
 
         response = client.get(self.url)
 
-        assert response.content.count(b"soon") == 2
+        assert response.content.count(b"soon") == 1
 
 
 @pytest.mark.django_db

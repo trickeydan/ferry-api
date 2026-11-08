@@ -6,19 +6,21 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.db import transaction
+from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
-from django.views.generic import DetailView, FormView, ListView, TemplateView
+from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView
 from django.views.generic.detail import SingleObjectMixin
 from rules.contrib.views import PermissionRequiredMixin
 
 from ferry.accounts.models import Person
 from ferry.core.http import HttpRequest
 from ferry.core.mixins import BreadcrumbsMixin
-from ferry.pub.forms import PubEventRSVPManualEntryForm
+from ferry.pub.forms import PubEventRSVPManualEntryForm, PubForm
 from ferry.pub.models import (
+    Pub,
     PubEvent,
     PubEventAttendanceTombstone,
     PubEventBooking,
@@ -29,6 +31,7 @@ from ferry.pub.models import (
 from ferry.pub.repository import (
     annotate_attendee_count,
     get_attendees_for_pub_event,
+    get_listed_pubs,
     get_next_pub_summary,
     get_pub_booking_form,
 )
@@ -62,6 +65,7 @@ class PubOverviewView(LoginRequiredMixin, BreadcrumbsMixin, TemplateView):
 
         return super().get_context_data(
             recent_events=recent_events,
+            pubs=get_listed_pubs(self.request.user)[:5],
             **get_next_pub_summary(self.request.user.person),
             **kwargs,
         )
@@ -303,3 +307,76 @@ class SetAutoPubView(AutoPubFragmentsMixin, View):
 
         set_autopub(person, enabled=enabled == "1")
         return self.render_fragments(request, person, target="autopub")
+
+
+class PubListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
+    template_name = "pub/pub_list.html"
+
+    def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
+        return super().get_breadcrumbs() + [(reverse("pub:overview"), "Pub"), (None, "Pubs")]
+
+    def get_queryset(self) -> QuerySet[Pub]:
+        assert self.request.user.is_authenticated
+        return get_listed_pubs(self.request.user)
+
+
+class PubCreateView(LoginRequiredMixin, PermissionRequiredMixin, BreadcrumbsMixin, CreateView):
+    template_name = "pub/pub_form.html"
+    model = Pub
+    form_class = PubForm
+    permission_required = "pub.create_pub"
+    success_url = reverse_lazy("pub:pubs-list")
+
+    def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
+        return super().get_breadcrumbs() + [
+            (reverse("pub:overview"), "Pub"),
+            (reverse("pub:pubs-list"), "Pubs"),
+            (None, "New Pub"),
+        ]
+
+    def form_valid(self, form: PubForm) -> http.HttpResponse:
+        messages.success(self.request, f"Added {form.instance.name}.")
+        return super().form_valid(form)
+
+
+class PubUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BreadcrumbsMixin, UpdateView):
+    template_name = "pub/pub_form.html"
+    form_class = PubForm
+    permission_required = "pub.edit_pub"
+    success_url = reverse_lazy("pub:pubs-list")
+
+    def get_queryset(self) -> QuerySet[Pub]:
+        assert self.request.user.is_authenticated
+        return Pub.objects.for_user(self.request.user).active()
+
+    def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
+        return super().get_breadcrumbs() + [
+            (reverse("pub:overview"), "Pub"),
+            (reverse("pub:pubs-list"), "Pubs"),
+            (None, f"Edit {self.object.name}"),
+        ]
+
+    def form_valid(self, form: PubForm) -> http.HttpResponse:
+        messages.success(self.request, f"Updated {form.instance.name}.")
+        return super().form_valid(form)
+
+
+class SetDefaultPubView(LoginRequiredMixin, View):
+    def post(self, request: HttpRequest, pk: UUID) -> http.HttpResponse:
+        assert request.user.is_authenticated
+
+        if not request.htmx:
+            raise SuspiciousOperation("That request is not valid.")
+
+        if not request.user.has_perm("pub.set_default_pub"):
+            raise PermissionDenied("Only admins can choose the default pub.")
+
+        pub = get_object_or_404(Pub.objects.for_user(request.user).active(), id=pk)
+        pub.is_default = True
+        pub.save()  # Saving a new default demotes the previous one.
+
+        return render(
+            request,
+            "pub/inc/pubs_table.html",
+            {"pubs": get_listed_pubs(request.user), "show_actions": True},
+        )

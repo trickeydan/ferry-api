@@ -1,0 +1,46 @@
+{% load rules %}
+{% has_perm 'pub.set_default_pub' request.user as can_set_default %}
+<div id="pubs-table" class="table-responsive">
+  <table class="table mb-0">
+    <thead>
+      <tr>
+        <th scope="col">Pub</th>
+        <th scope="col">Default</th>
+        <th scope="col">Links</th>
+        {% if show_actions %}
+          <th scope="col">Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for pub in pubs %}
+        <tr class="align-middle">
+          <th scope="row">{{ pub.emoji }} {{ pub.name }}</th>
+          <td>{% if pub.is_default %}<span class="badge text-bg-primary">Default</span>{% endif %}</td>
+          <td>
+            <a href="{{ pub.map_url }}">Map</a>
+            {% if pub.menu_url %}&middot; <a href="{{ pub.menu_url }}">Menu</a>{% endif %}
+            {% if pub.booking_url %}&middot; <a href="{{ pub.booking_url }}">Booking</a>{% endif %}
+          </td>
+          {% if show_actions %}
+            <td>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'pub:pubs-edit' pub.id %}">Edit</a>
+              {% if can_set_default and not pub.is_default %}
+                <button class="btn btn-sm btn-outline-primary"
+                        hx-post="{% url 'pub:pubs-set-default' pub.id %}"
+                        hx-target="#pubs-table"
+                        hx-swap="outerHTML">
+                  Make default
+                </button>
+              {% endif %}
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4">There are no pubs yet.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
