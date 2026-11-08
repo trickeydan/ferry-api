@@ -8,6 +8,8 @@ from django.views.generic import ListView, TemplateView
 from ferry.accounts.models import Person, PersonQuerySet
 from ferry.core.mixins import BreadcrumbsMixin
 from ferry.court.models import Accusation
+from ferry.pub.models import PubEvent, PubEventRSVP
+from ferry.pub.repository import get_attendees_for_pub_event
 
 
 class ScoreboardView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
@@ -23,6 +25,26 @@ class ScoreboardView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
 
         qs = qs.order_by("rank", "-current_score", "-num_ratified_accusations")
         return qs
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        assert self.request.user.is_authenticated
+
+        next_event = PubEvent.objects.get_next()
+        next_event_rsvp = None
+        next_event_attendee_count = None
+        if next_event:
+            next_event_attendee_count = get_attendees_for_pub_event(next_event).count()
+            if self.request.user.person:
+                next_event_rsvp = PubEventRSVP.objects.filter(
+                    pub_event=next_event, person=self.request.user.person
+                ).first()
+
+        return super().get_context_data(
+            next_event=next_event,
+            next_event_rsvp=next_event_rsvp,
+            next_event_attendee_count=next_event_attendee_count,
+            **kwargs,
+        )
 
 
 class ScoreHistoryView(LoginRequiredMixin, BreadcrumbsMixin, TemplateView):

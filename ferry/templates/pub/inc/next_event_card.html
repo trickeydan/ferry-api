@@ -1,0 +1,30 @@
+<div class="card mb-3">
+  <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-2">
+    {% if next_event %}
+      <div>
+        <h5 class="card-title mb-1">Next Pub: {{ next_event.pub }}</h5>
+        <p class="card-text mb-0">
+          {{ next_event.timestamp }}{% if next_event.table %} &middot; {{ next_event.table }}{% endif %}
+          &middot; <a href="{{ next_event.pub.map_url }}">Map</a>
+        </p>
+        <p class="card-text text-body-secondary mb-0">
+          {{ next_event_attendee_count }} attending &middot;
+          {% if not next_event_rsvp %}
+            You haven't responded yet
+          {% elif next_event_rsvp.is_attending %}
+            You're going
+          {% else %}
+            You're not going
+          {% endif %}
+        </p>
+      </div>
+      <a class="btn btn-primary" href="{% url 'pub:events-detail' next_event.id %}">View details</a>
+    {% else %}
+      <div>
+        <h5 class="card-title mb-1">Next Pub</h5>
+        <p class="card-text mb-0">The next pub hasn't been decided yet.</p>
+      </div>
+      <a class="btn btn-outline-secondary" href="{% url 'pub:events-list' %}">Pub events</a>
+    {% endif %}
+  </div>
+</div>

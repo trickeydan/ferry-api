@@ -31,6 +31,7 @@ from ferry.pub.repository import annotate_attendee_count, get_attendees_for_pub_
 class PubEventListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
     breadcrumbs = [(None, "Pub"), (None, "Events")]
     template_name = "pub/event_list.html"
+    paginate_by = 20
 
     def get_queryset(self) -> PubEventQuerySet:
         assert self.request.user.is_authenticated
