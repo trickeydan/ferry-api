@@ -1,0 +1,58 @@
+{% extends "base_pub.html" %}
+
+{% block title %}Pub{% endblock %}
+
+{% block content %}
+  {{ block.super }}
+  {% include "pub/inc/next_event_card.html" %}
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-baseline">
+          <h2 class="h6 mb-0">Recent events</h2>
+          <a href="{% url 'pub:events-list' %}">All events &rarr;</a>
+        </div>
+        <div class="card-body">
+          {% if recent_events %}
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Location</th>
+                    <th scope="col">Attendees</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for pub_event in recent_events %}
+                    {% include "pub/event_list__table_row.html" %}
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="mb-0">There are no pub events.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-baseline">
+          <h2 class="h6 mb-0">Your AutoPub</h2>
+          <a href="{% url 'accounts:profile' %}">Change in profile &rarr;</a>
+        </div>
+        <div class="card-body">
+          {% if person.autopub %}
+            <p class="mb-0"><span class="badge text-bg-success">On</span></p>
+            <p class="mt-2 mb-0 text-body-secondary">You are automatically marked as attending when a pub event is created.</p>
+          {% else %}
+            <p class="mb-0"><span class="badge text-bg-secondary">Off</span></p>
+            <p class="mt-2 mb-0 text-body-secondary">Turn on AutoPub in your profile to be marked as attending automatically.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

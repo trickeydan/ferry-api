@@ -1,0 +1,54 @@
+{% extends "base_ferries.html" %}
+
+{% block title %}Ferries{% endblock %}
+
+{% block content %}
+  {{ block.super }}
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-baseline">
+          <h2 class="h6 mb-0">Scoreboard &middot; top 5</h2>
+          <a href="{% url 'dashboard:scoreboard' %}">Full scoreboard &rarr;</a>
+        </div>
+        <div class="card-body">
+          {% if scoreboard %}
+            <div class="table-responsive">
+              {% include "dashboard/inc/scoreboard_table.html" with people=scoreboard %}
+            </div>
+          {% else %}
+            <p class="mb-0">Nobody has any points yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-baseline">
+          <h2 class="h6 mb-0">My consequences</h2>
+          <a href="{% url 'court:consequence-list' %}">Manage &rarr;</a>
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for consequence in my_consequences %}
+            <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
+              <span>{{ consequence.content }}</span>
+              <span class="badge text-bg-secondary" title="Victim count">{{ consequence.victim_count }}</span>
+            </li>
+          {% empty %}
+            <li class="list-group-item">You have not created any consequences.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-baseline mb-2">
+    <h2 class="h6 mb-0">Recent accusations</h2>
+    <a href="{% url 'dashboard:recent-accusations' %}">All accusations &rarr;</a>
+  </div>
+  {% for accusation in recent_accusations %}
+    {% include "inc/accusation-card.html" with accusation=accusation %}
+  {% empty %}
+    <p>Weird, no accusations have happened.</p>
+  {% endfor %}
+{% endblock %}

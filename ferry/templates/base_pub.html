@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block page_title %}Pub{% endblock %}
+
+{% block content %}
+  {% with view=request.resolver_match.view_name %}
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link {% if view == 'pub:overview' %}active{% endif %}" href="{% url 'pub:overview' %}">Overview</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if view == 'pub:events-list' or view == 'pub:events-detail' or view == 'pub:events-manual-rsvp' %}active{% endif %}" href="{% url 'pub:events-list' %}">Events</a>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link disabled" aria-disabled="true">Pubs <span class="badge text-bg-warning">soon</span></span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link disabled" aria-disabled="true">AutoPub <span class="badge text-bg-warning">soon</span></span>
+      </li>
+    </ul>
+  {% endwith %}
+{% endblock %}

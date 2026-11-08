@@ -1,30 +1,43 @@
-<div class="card mb-3">
-  <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-2">
+<div class="card mb-4">
+  <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
     {% if next_event %}
       <div>
-        <h5 class="card-title mb-1">Next Pub: {{ next_event.pub }}</h5>
-        <p class="card-text mb-0">
+        <span class="badge text-bg-secondary mb-1">Next pub</span>
+        <h2 class="h5 mb-1">{{ next_event.pub }}</h2>
+        <div class="text-body-secondary">
           {{ next_event.timestamp }}{% if next_event.table %} &middot; {{ next_event.table }}{% endif %}
           &middot; <a href="{{ next_event.pub.map_url }}">Map</a>
-        </p>
-        <p class="card-text text-body-secondary mb-0">
-          {{ next_event_attendee_count }} attending &middot;
-          {% if not next_event_rsvp %}
-            You haven't responded yet
-          {% elif next_event_rsvp.is_attending %}
-            You're going
-          {% else %}
-            You're not going
-          {% endif %}
-        </p>
+        </div>
+        <div class="text-body-secondary">{{ next_event_attendee_count }} attending</div>
       </div>
-      <a class="btn btn-primary" href="{% url 'pub:events-detail' next_event.id %}">View details</a>
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        {% if next_event_rsvp.method == "T" %}
+          <span class="badge text-bg-warning">You skipped this one</span>
+        {% elif not next_event_rsvp %}
+          <span class="badge text-bg-secondary">You haven't responded yet</span>
+        {% elif next_event_rsvp.is_attending %}
+          <span class="badge text-bg-success">You're going</span>
+        {% else %}
+          <span class="badge text-bg-secondary">You're not going</span>
+        {% endif %}
+        <a class="btn btn-primary" href="{% url 'pub:events-detail' next_event.id %}">View details</a>
+      </div>
     {% else %}
       <div>
-        <h5 class="card-title mb-1">Next Pub</h5>
-        <p class="card-text mb-0">The next pub hasn't been decided yet.</p>
+        <span class="badge text-bg-secondary mb-1">Next pub</span>
+        <h2 class="h5 mb-1">Not chosen yet</h2>
+        <div class="text-body-secondary">
+          The location of the next pub has not yet been decided. Please use <code>/pub next</code> in Discord.
+        </div>
       </div>
-      <a class="btn btn-outline-secondary" href="{% url 'pub:events-list' %}">Pub events</a>
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        {% if has_upcoming_tombstone %}
+          <span class="badge text-bg-warning">You've skipped the next pub</span>
+        {% elif person.autopub %}
+          <span class="badge text-bg-success">AutoPub will add you</span>
+        {% endif %}
+        <a class="btn btn-outline-primary" href="{% url 'pub:events-list' %}">Pub events</a>
+      </div>
     {% endif %}
   </div>
 </div>

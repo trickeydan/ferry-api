@@ -20,7 +20,12 @@ from .models import Consequence
 
 class ConsequenceListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
     template_name = "court/consequence_list.html"
-    breadcrumbs = [(None, "Ferries"), (None, "My Consequences")]
+
+    def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
+        return super().get_breadcrumbs() + [
+            (reverse("dashboard:ferries-overview"), "Ferries"),
+            (None, "My Consequences"),
+        ]
 
     def get_queryset(self) -> models.QuerySet[Any]:
         assert self.request.user.is_authenticated
@@ -39,10 +44,10 @@ class ConsequenceCreateView(LoginRequiredMixin, BreadcrumbsMixin, CreateView):
     model = Consequence
     form_class = ConsequenceCreateForm
     success_url = reverse_lazy("court:consequence-list")
-    breadcrumbs = [(None, "Ferries")]
 
     def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
         return super().get_breadcrumbs() + [
+            (reverse("dashboard:ferries-overview"), "Ferries"),
             (reverse("court:consequence-list"), "My Consequences"),
             (None, "New Consequence"),
         ]

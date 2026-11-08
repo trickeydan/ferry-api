@@ -95,7 +95,7 @@ class UnlinkedAccountView(mixins.LoginRequiredMixin, TemplateView):
         assert request.user.is_authenticated
 
         if request.user.person is not None:
-            return redirect("dashboard:scoreboard")
+            return redirect("dashboard:home")
 
         return super().dispatch(request, *args, **kwargs)
 

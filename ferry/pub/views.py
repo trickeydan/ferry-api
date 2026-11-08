@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views import View
-from django.views.generic import DetailView, FormView, ListView
+from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django.views.generic.detail import SingleObjectMixin
 from rules.contrib.views import PermissionRequiredMixin
 
@@ -19,17 +19,23 @@ from ferry.core.mixins import BreadcrumbsMixin
 from ferry.pub.forms import PubEventRSVPManualEntryForm
 from ferry.pub.models import (
     PubEvent,
-    PubEventAttendanceTombstone,
     PubEventBooking,
     PubEventQuerySet,
     PubEventRSVP,
     PubEventRSVPMethod,
 )
-from ferry.pub.repository import annotate_attendee_count, get_attendees_for_pub_event, get_pub_booking_form
+from ferry.pub.repository import (
+    annotate_attendee_count,
+    get_attendees_for_pub_event,
+    get_next_pub_summary,
+    get_pub_booking_form,
+)
 
 
 class PubEventListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
-    breadcrumbs = [(None, "Pub"), (None, "Events")]
+    def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
+        return super().get_breadcrumbs() + [(reverse("pub:overview"), "Pub"), (None, "Events")]
+
     template_name = "pub/event_list.html"
     paginate_by = 20
 
@@ -40,36 +46,20 @@ class PubEventListView(LoginRequiredMixin, BreadcrumbsMixin, ListView):
         qs = annotate_attendee_count(qs)
         return qs
 
+
+class PubOverviewView(LoginRequiredMixin, BreadcrumbsMixin, TemplateView):
+    breadcrumbs = [(None, "Pub")]
+    template_name = "pub/overview.html"
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         assert self.request.user.is_authenticated
-        assert self.request.user.person
 
-        upcoming_pub = PubEvent.objects.get_next()
-        if upcoming_pub:
-            upcoming_pub_rsvp = PubEventRSVP.objects.filter(
-                pub_event=upcoming_pub, person=self.request.user.person
-            ).first()
-
-            try:
-                booking: PubEventBooking | None = upcoming_pub.booking
-            except PubEventBooking.DoesNotExist:
-                booking = None
-        else:
-            upcoming_pub_rsvp = None
-            booking = None
-
-        has_upcoming_tombstone = PubEventAttendanceTombstone.objects.filter(
-            person=self.request.user.person,
-            pub_event__isnull=True,
-        ).exists()
+        recent_events = PubEvent.objects.for_user(self.request.user).filter(timestamp__lt=timezone.now())
+        recent_events = annotate_attendee_count(recent_events.order_by("-timestamp"))[:5]
 
         return super().get_context_data(
-            upcoming_pub=upcoming_pub,
-            upcoming_pub_rsvp=upcoming_pub_rsvp,
-            upcoming_pub_booking=booking,
-            upcoming_pub_booking_form=get_pub_booking_form(upcoming_pub) if upcoming_pub else None,
-            attendees=get_attendees_for_pub_event(upcoming_pub) if upcoming_pub else None,
-            has_upcoming_tombstone=has_upcoming_tombstone,
+            recent_events=recent_events,
+            **get_next_pub_summary(self.request.user.person),
             **kwargs,
         )
 
@@ -79,7 +69,7 @@ class PubEventDetailView(LoginRequiredMixin, BreadcrumbsMixin, DetailView):
 
     def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
         return super().get_breadcrumbs() + [
-            (None, "Pub"),
+            (reverse("pub:overview"), "Pub"),
             (reverse("pub:events-list"), "Events"),
             (None, str(self.object)),
         ]
@@ -218,7 +208,7 @@ class PubEventManualRSVPView(
 
     def get_breadcrumbs(self) -> list[tuple[str | None, str]]:
         return super().get_breadcrumbs() + [
-            (None, "Pub"),
+            (reverse("pub:overview"), "Pub"),
             (reverse("pub:events-list"), "Events"),
             (reverse("pub:events-detail", args=[self.object.id]), str(self.object)),
             (None, "Add Manual RSVP"),

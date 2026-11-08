@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+{% block page_title %}{{ app_name }}{% endblock %}
+
+{% block content %}
+  {% include "pub/inc/next_event_card.html" %}
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-baseline">
+          <h2 class="h6 mb-0">Scoreboard &middot; top 3</h2>
+          <a href="{% url 'dashboard:ferries-overview' %}">Ferries &rarr;</a>
+        </div>
+        <div class="card-body">
+          {% if scoreboard %}
+            <div class="table-responsive">
+              {% include "dashboard/inc/scoreboard_table.html" with people=scoreboard %}
+            </div>
+          {% else %}
+            <p class="mb-0">Nobody has any points yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="d-flex justify-content-between align-items-baseline mb-2">
+        <h2 class="h6 mb-0">Latest accusation</h2>
+        <a href="{% url 'dashboard:recent-accusations' %}">All accusations &rarr;</a>
+      </div>
+      {% if latest_accusation %}
+        {% include "inc/accusation-card.html" with accusation=latest_accusation %}
+      {% else %}
+        <p>Weird, no accusations have happened.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

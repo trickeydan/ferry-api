@@ -5,6 +5,7 @@ from . import views
 app_name = "pub"
 
 urlpatterns = [
+    path("", views.PubOverviewView.as_view(), name="overview"),
     path("events", views.PubEventListView.as_view(), name="events-list"),
     path("events/<uuid:pk>/", views.PubEventDetailView.as_view(), name="events-detail"),
     path("events/<uuid:pk>/rsvp/", views.PubEventManualRSVPView.as_view(), name="events-manual-rsvp"),

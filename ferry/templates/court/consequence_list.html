@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_ferries.html" %}
 {% load static %}
 
 {% block title %}My Consequences{% endblock %}
@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+  {{ block.super }}
   <p>
     Consequences are assigned to a person after they have been found guilty in the ferry game. <br/>
     They should be in the <em>present perfect continuous</em> tense, so they should complete the sentence <code>$player has been sentenced to...</code>

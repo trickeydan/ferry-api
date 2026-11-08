@@ -1,9 +1,11 @@
-{% extends "base.html" %}
+{% extends "base_ferries.html" %}
 {% load static crispy_forms_tags %}
 
 {% block title %}New Consequence{% endblock %}
 {% block page_title %}New Consequence{% endblock %}
 
 {% block content %}
+  {{ block.super }}
+  <p><a href="{% url 'court:consequence-list' %}">&larr; My Consequences</a></p>
   {% crispy form %}
 {% endblock %}

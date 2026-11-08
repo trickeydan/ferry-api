@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block page_title %}Ferries{% endblock %}
+
+{% block content %}
+  {% with view=request.resolver_match.view_name %}
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link {% if view == 'dashboard:ferries-overview' %}active{% endif %}" href="{% url 'dashboard:ferries-overview' %}">Overview</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if view == 'dashboard:scoreboard' %}active{% endif %}" href="{% url 'dashboard:scoreboard' %}">Scoreboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if view == 'dashboard:score-history' %}active{% endif %}" href="{% url 'dashboard:score-history' %}">Score History</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if view == 'dashboard:recent-accusations' %}active{% endif %}" href="{% url 'dashboard:recent-accusations' %}">Accusations</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if view == 'court:consequence-list' or view == 'court:consequence-create' %}active{% endif %}" href="{% url 'court:consequence-list' %}">My Consequences</a>
+      </li>
+    </ul>
+  {% endwith %}
+{% endblock %}

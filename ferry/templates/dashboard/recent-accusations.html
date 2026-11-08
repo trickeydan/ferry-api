@@ -1,4 +1,4 @@
-{% extends "base_home.html" %}
+{% extends "base_ferries.html" %}
 {% load static %}
 
 {% block title %}Recent Accusations{% endblock %}
@@ -10,4 +10,5 @@
   {% empty %}
     <p>Weird, no accusations have happened.</p>
   {% endfor %}
+  {% include "inc/pagination.html" %}
 {% endblock %}
